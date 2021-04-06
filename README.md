@@ -2,6 +2,7 @@
 
 A convenient library to create local networks of worker modules, written in TypeScript, running in Node.js.
 
+
 ## Features
 
 - **Typed**. This is a TypeScript project. No need to install external typings.

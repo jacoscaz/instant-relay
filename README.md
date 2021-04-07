@@ -40,9 +40,7 @@ Here it is a simple example where in the same file there are:
 
 ```javascript
 const {InstantRelay} = require('../dist');
-
 const ir = new InstantRelay();
-
 
 // Here I implement the sender node
 class DummySender {
@@ -66,7 +64,6 @@ class DummySender {
         setTimeout(sendLoop.bind(this), 1000);
       });
     };
-
     sendLoop();
   }
 }
@@ -93,7 +90,7 @@ const receiver = new DummyReceiver('dummy-receiver');
 // There the nodes are registered into Instant Relay
 ir.registerIRNodes(sender, receiver);
 
-// Wire the node together
+// Wire the nodes together
 ir.wireCommunication({
   senderId: 'dummy-sender', // The sender
   allowedRecipientIds: ['dummy-receiver'], // An array of possible receivers

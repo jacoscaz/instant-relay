@@ -4,7 +4,9 @@ A convenient library to create local networks of working modules, written in Typ
 
 The idea comes from the IoT field where, most of the time, edge computing devices are required to: gather data from different sources, do some standardization / light computation over the data and finally publish it to one of more cloud platforms.
 
-From there we generalized the requirement and the goal became having a simple tool to let local pieces of business logic pass messages among each other, with an important plus: managing [back-pressure](https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7).
+From there we generalized the requirement and the goal became having a simple tool to let local pieces of business logic pass messages among each other, with two important features:
+- managing [back-pressure](https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7).
+- the possibility the create a graph of nodes (each sender can have multiple receivers)
 
 ## Features
 

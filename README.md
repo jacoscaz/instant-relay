@@ -5,7 +5,7 @@ A convenient library to create local networks of worker modules, written in Type
 
 ## Features
 
-- **Typed**. This is a TypeScript project. No need to install external typings.
+- **Typed**. This is a TypeScript project. No need to install external typings. (Examples and tests are in js)
 - **Pluggable** nodes. You chose which modules to include in your project, Instant Relay provides just the API to allow easy inter-module communication.
 - **Fast** inter-module communication provided by the very performant [fastq](https://www.npmjs.com/package/fastq) module.
 - Full **back-pressure management** along the chain of connected modules.

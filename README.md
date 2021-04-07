@@ -20,7 +20,6 @@ A convenient library to create local networks of worker modules, written in Type
 Node.js v14 LTS (14.15.1) or later.
 
 ## Install
-⚠️ Not published to npm yet
 
 by using `npm`:
 ```bash

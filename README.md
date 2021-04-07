@@ -103,6 +103,16 @@ sender.start();
 
 This example can be found [here](./examples/simple.js)
 
+## Plugins
+
+Here it a list of nodes plugins we are aware of:
+
+- Source Nodes:
+  - [ir-mqtt-broker](https://github.com/beautifulinteractions/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes
+- Receiver Nodes:
+  - 🥺 nothing yet
+- Tranform Nodes:
+  - 🥺 nothing yet
 ## Contributing
 
 Contributions are very welcome and wanted.

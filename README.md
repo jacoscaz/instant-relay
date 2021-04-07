@@ -110,7 +110,7 @@ Here it is a list of nodes plugins we are aware of:
 - Source Nodes:
   - [ir-mqtt-broker](https://github.com/beautifulinteractions/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes
 - Receiver Nodes:
-  - 🥺 nothing yet
+  - [ir-restifier](https://github.com/beautifulinteractions/ir-restifier): An Instant Relay Receiver Node that exposes received messages via a RESTful API (backed by fastify)
 - Tranform Nodes:
   - 🥺 nothing yet
 ## Contributing

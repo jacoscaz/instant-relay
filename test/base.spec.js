@@ -34,7 +34,7 @@ describe('InstantRelay', () => {
 
     let counter = 0;
     const dummyElaborate = (msg, callback) => {
-      msg.getLogger().info(msg);
+      msg.logger.info(msg);
       counter += 1;
       callback();
     };
@@ -63,7 +63,7 @@ describe('InstantRelay', () => {
 
     let counter = 0;
     const dummyElaborate = (msg) => {
-      msg.getLogger().info(msg);
+      msg.logger.info(msg);
       counter += 1;
     };
     dummyReceiver1.elaborate = dummyElaborate;

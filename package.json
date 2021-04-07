@@ -21,7 +21,9 @@
     "web",
     "relay",
     "open",
-    "communication"
+    "communication",
+    "worker",
+    "iot"
   ],
   "devDependencies": {
     "@types/async": "^3.2.5",

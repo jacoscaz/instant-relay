@@ -105,7 +105,7 @@ This example can be found [here](./examples/simple.js)
 
 ## Plugins
 
-Here it is a list of nodes plugins we are aware of:
+Here it is a list of plugins we are aware of:
 
 - Source Nodes:
   - [ir-mqtt-broker](https://github.com/beautifulinteractions/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes

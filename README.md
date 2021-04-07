@@ -1,6 +1,6 @@
 # Instant Relay
 
-A convenient library to create local networks of worker modules, written in TypeScript, running in Node.js.
+A convenient library to create local networks of working modules, written in TypeScript, running in Node.js.
 
 
 ## Features

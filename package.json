@@ -1,6 +1,6 @@
 {
   "name": "instant-relay",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "A convenient library to create local networks of worker modules, written in TypeScript, running in Node.js.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,10 +10,16 @@
     "lint": "eslint --ext .ts src",
     "test": "nyc mocha --timeout=3000",
     "prepare": "husky install",
-    "prepublish": "tsc"
+    "prepublish": "tsc",
+    "publish:alpha": "npm publish --tag alpha",
+    "publish:beta": "npm publish --tag beta"
   },
   "author": "Beautiful Interactions s.r.l.",
   "license": "MIT",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/beautifulinteractions/instant-relay.git"

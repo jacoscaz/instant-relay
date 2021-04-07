@@ -81,7 +81,7 @@ export class InstantRelay {
    * The callback is called when all the receiver nodes have read the message
    */
   private send(msg: InternalMessage, recipients: string[] = [], callback: Callback = () => {}): void {
-    const senderQueues = this.queues[msg['senderId']];
+    const senderQueues = this.queues[msg.senderId];
 
     // if no queue for the senderId is found, return
     if (typeof senderQueues === 'undefined') return;
@@ -109,8 +109,14 @@ export class InstantRelay {
     };
   }
 
+  /**
+   * It returns an instance of empty InternalMessage assigned to the given sender
+   */
+  static createEmptyMessage(senderId: string): InternalMessage {
+    return new InternalMessage(senderId);
+  }
+
 }
 
-export default InstantRelay;
 export * from './types';
 export * from './internalMessage';

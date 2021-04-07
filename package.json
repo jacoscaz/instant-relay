@@ -14,6 +14,13 @@
   },
   "author": "Beautiful Interactions s.r.l.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beautifulinteractions/instant-relay.git"
+  },
+  "bugs": {
+    "url": "http://github.com/beautifulinteractions/instant-relay/issues"
+  },
   "engines": {
     "node": ">= 14"
   },

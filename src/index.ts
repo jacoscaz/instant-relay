@@ -88,7 +88,12 @@ export class InstantRelay {
 
     async.each(senderQueues, (q: Queue, cb: Callback) => {
       if (recipients.length === 0 || recipients.includes(q.recipientId)) {
-        q.queue.push(msg, cb);
+        q.queue.push(msg);
+        if (q.queue.length() > 250) {
+          setTimeout(cb, q.queue.length());
+        } else {
+          cb();
+        }
       } else {
         cb();
       }

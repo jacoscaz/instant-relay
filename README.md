@@ -8,6 +8,8 @@ From there we generalized the requirement and the goal became having a simple to
 - managing [back-pressure](https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7).
 - the possibility the create a graph of nodes (each sender can have multiple receivers)
 
+For a use-case example have a look at [mqtt-restifier](https://github.com/beautifulinteractions/mqtt-restifier)
+
 ## Features
 
 - **Typed**. This is a TypeScript project. No need to install external typings. (Examples and tests are in js)

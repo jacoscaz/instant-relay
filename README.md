@@ -21,6 +21,7 @@ Node.js v14 LTS (14.15.1) or later.
 
 ## Install
 ⚠️ Not published to npm yet
+
 by using `npm`:
 ```bash
 $ npm install instant-relay

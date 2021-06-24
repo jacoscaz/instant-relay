@@ -8,7 +8,7 @@ From there we generalized the requirement and the goal became having a simple to
 - managing [back-pressure](https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7).
 - the possibility the create a graph of nodes (each sender can have multiple receivers)
 
-For a use-case example have a look at [mqtt-restifier](https://github.com/beautifulinteractions/mqtt-restifier)
+For a use-case example have a look at [mqtt-restifier](https://github.com/instantrelay/mqtt-restifier)
 
 ## Features
 
@@ -114,10 +114,10 @@ This example can be found [here](./examples/simple.js)
 Here it is a list of plugins we are aware of:
 
 - Source Nodes:
-  - [ir-mqtt-broker](https://github.com/beautifulinteractions/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes
+  - [ir-mqtt-broker](https://github.com/instantrelay/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes
 - Receiver Nodes:
-  - [ir-restifier](https://github.com/beautifulinteractions/ir-restifier): An Instant Relay Receiver Node that exposes received messages via a RESTful API (backed by fastify)
-- Tranform Nodes:
+  - [ir-restifier](https://github.com/instantrelay/ir-restifier): An Instant Relay Receiver Node that exposes received messages via a RESTful API (backed by fastify)
+- Transform Nodes:
   - 🥺 nothing yet
 ## Contributing
 
@@ -129,20 +129,6 @@ To submit your custom hook, please make sure your read our [CONTRIBUTING](./CONT
 
 1. You have updated the package.json version and reported your changes into the [CHANGELOG](./CHANGELOG.md) file
 2. make sure you run `npm test` and `npm build` before submitting your merge request.
-
-### Credits
-
-This library is provided and sponsored by:
-
-<div>
-  <p>
-    <a href="https://beautifulinteractions.com/">
-      <img src="https://beautifulinteractions.com/img/logo-colorful.svg" alt="Beautiful interactions" width="140px" />
-    </a>
-  </p>
-</div>
-
-As part of our commitment to support and contribute to the open source community.
 
 ## License
 Licensed under [MIT](./LICENSE).

@@ -1,134 +1,100 @@
-# Instant Relay
 
-A convenient library to create local networks of working modules, written in TypeScript, running in Node.js.
+# instant-relay
 
-The idea comes from the IoT field where, most of the time, edge computing devices are required to: gather data from different sources, do some standardization / light computation over the data and finally publish it to one of more cloud platforms.
+`instant-relay` is an opinionated library for asynchronous communication
+between nodes in non-hierarchical sets. Each registered node can send 
+(one-to-one) or broadcast (one-to-many). It is written in TypeScript for
+Node.js, with the following priorities in mind:
 
-From there we generalized the requirement and the goal became having a simple tool to let local pieces of business logic pass messages among each other, with two important features:
-- managing [back-pressure](https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7).
-- the possibility the create a graph of nodes (each sender can have multiple receivers)
+1. **Backpressure management and prevention of accidental blocking 
+   behavior**, addressed by decoupling message delivery from message
+   handling and managing backpressure upon delivery.
+2. **Simplicity and ease of debugging**, addressed by a small codebase (~ 300
+   LoCs in total), few dependencies (2 direct, 4 in total) and forcing the use
+   of unique message identifiers to easily track messages as they are passed
+   from node to node.
+3. **Performance**, addressed by selecting fast data structure implementations
+   and reducing the overall number of allocations per handled message.
 
-For a use-case example have a look at [mqtt-restifier](https://github.com/instantrelay/mqtt-restifier)
+`instant-relay` is a work-in-progress and is currently being tested and refined
+in pre-production environments. It was born out of the convergence of previous
+projects in the space of multi-protocol gateways for the IoT sector
 
-## Features
+## How to use
 
-- **Typed**. This is a TypeScript project. No need to install external typings. (Examples and tests are in js)
-- **Pluggable** nodes. You chose which modules to include in your project, Instant Relay provides just the API to allow easy inter-module communication.
-- **Fast** inter-module communication provided by the very performant [fastq](https://www.npmjs.com/package/fastq) module.
-- Full **back-pressure management** along the chain of connected modules.
-- **Simple** internal logic.
-- **Easy** to use.
-- **Expandable**: write your own worker module by implementing the provided interface.
-- Use in your **TypeScript** or **Javascript** project.
-- Easy **logging** and tracing: each message embeds an instance of [pino](https://www.npmjs.com/package/pino) (the fastest logger around), so that you have to simply call `msg.logger.info('Hello')` to keep track of your message moving around the network.
+A new relay is created through the `InstantRelay` class, which requires a
+union of possible message types as a type argument. 
 
-## Requirements
+Message types _must_ implement the `Message` interface, which mandates the
+presence of the `id` and `type` properties.
 
-Node.js v14 LTS (14.15.1) or later.
+New nodes can be added to an instance of the `InstantRelay` class by providing
+dedicated factory functions implementing the `NodeFactory` interface.
 
-## Install
+```typescript
+import { InstantRelay, Message, NodeFactory, uid } from 'instant-relay';
 
-by using `npm`:
-```bash
-$ npm install instant-relay
+interface Request extends Message { type: 'req'; }
+interface Response extends Message { type: 'res'; reqId: string; }
+type Messages = Request | Response;
+
+const relay = new InstantRelay<Messages>();
+
+const serverFactory: NodeFactory<Messages, {}> = (send, broadcast, opts) => {
+
+  return (message, done) => {
+    switch (message.type) {
+      case 'req':
+        console.log(`server received request ${message.id}`);
+        setTimeout(() => {
+          send('client', { id: uid(), type: 'res', reqId: message.id }, done);
+        }, Math.random() * 200);
+        break;
+      default:
+        done();
+    }
+  };
+};
+
+relay.addNode('server', serverFactory, {});
+
+const clientFactory: NodeFactory<Messages, {}> = (send, broadcast, opts) => {
+
+  const loop = () => {
+    send('server', { id: uid(), type: 'req' }, loop);
+  };
+
+  setImmediate(loop);
+
+  return (message, done) => {
+    switch (message.type) {
+      case 'res':
+        console.log(`client received a response for request ${message.reqId}`);
+        done();
+        break;
+      default:
+        done();
+    }
+
+  };
+};
+
+relay.addNode('client', clientFactory, {});
 ```
 
-by using `yarn`:
+Due to backpressure support, the loop that sends requests to the server node
+will quickly slow down to a rate compatible with the artificial latency.
 
-```bash
-$ yarn add instant-relay
+## Debug
+
+`instant-relay` uses the `debug` module with the `instant-relay` namespace.
+Debug messages can be enabled by setting the `DEBUG` environment variable as
+follows: 
+
+```shell
+DEBUG="instant-relay*" node index.js
 ```
-
-## Example
-
-Here it is a simple example where in the same file there are:
-- The implementation of a sender and a receiver
-- The wiring logic
-
-```javascript
-const {InstantRelay} = require('../dist');
-const ir = new InstantRelay();
-
-// Here I implement the sender node
-class DummySender {
-
-  // The first two parameters of a node must be an id and the `send` function
-  constructor(id, send) {
-    this.id = id;
-    this.send = send;
-  }
-
-  start() {
-    const sendLoop = () => {
-      // Create an empty message associated to this sender
-      const msg = InstantRelay.createEmptyMessage(this.id);
-
-      // Populate with a payload
-      msg.setPayload(`Message sent at ${new Date().toISOString()}`);
-
-      // Send!
-      this.send(msg, () => {
-        setTimeout(sendLoop.bind(this), 1000);
-      });
-    };
-    sendLoop();
-  }
-}
-
-// Here I implement the receiver node
-class DummyReceiver {
-  constructor(id, send) {
-    this.id = id;
-    this.send = send;
-  }
-
-  // The elaborate function is mandatory for all the nodes that have to receive messages
-  elaborate(msg, cb) {
-    msg.logger.info(msg, `I reached the destination ${this.id}`);
-    cb();
-  }
-}
-
-// Nodes instantiation
-const sender = new DummySender('dummy-sender', ir.getSend());
-const receiver = new DummyReceiver('dummy-receiver');
-
-
-// There the nodes are registered into Instant Relay
-ir.registerIRNodes(sender, receiver);
-
-// Wire the nodes together
-ir.wireCommunication({
-  senderId: 'dummy-sender', // The sender
-  allowedRecipientIds: ['dummy-receiver'], // An array of possible receivers
-});
-
-// Starts the sender's loop
-sender.start();
-```
-
-This example can be found [here](./examples/simple.js)
-
-## Plugins
-
-Here it is a list of plugins we are aware of:
-
-- Source Nodes:
-  - [ir-mqtt-broker](https://github.com/instantrelay/ir-mqtt-broker): A plugin for Instant Relay implementing an MQTT broker source node, backed by aedes
-- Receiver Nodes:
-  - [ir-restifier](https://github.com/instantrelay/ir-restifier): An Instant Relay Receiver Node that exposes received messages via a RESTful API (backed by fastify)
-- Transform Nodes:
-  - 🥺 nothing yet
-## Contributing
-
-Contributions are very welcome and wanted.
-
-To submit your custom hook, please make sure your read our [CONTRIBUTING](./CONTRIBUTING.md) guidelines.
-
-**Before submitting** a new merge request, please make sure:
-
-1. You have updated the package.json version and reported your changes into the [CHANGELOG](./CHANGELOG.md) file
-2. make sure you run `npm test` and `npm build` before submitting your merge request.
 
 ## License
+
 Licensed under [MIT](./LICENSE).

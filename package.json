@@ -1,20 +1,20 @@
 {
   "name": "instant-relay",
-  "version": "0.1.0",
-  "description": "A convenient library to create local networks of worker modules, written in TypeScript, running in Node.js.",
+  "version": "0.2.0",
+  "description": "An opinionated library for asynchronous communication between nodes. Focuses on backpressure management, simplicity, performance.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "ts:watch": "tsc --build --watch .",
     "ts:build": "tsc --build .",
-    "lint": "eslint --ext .ts src",
-    "test": "nyc mocha --timeout=3000",
-    "prepare": "husky install",
-    "prepublish": "tsc",
-    "publish:alpha": "npm publish --tag alpha",
-    "publish:beta": "npm publish --tag beta"
+    "build": "npm run ts:build",
+    "test": "mocha"
   },
-  "author": "InstantRelay",
+  "author": "Belay Engineering s.r.l. <info@belayeng.com>",
+  "contributors": [
+    "Jacopo Scazzosi <jacopo@belayeng.com>",
+    "Matteo Murgida <matteo@belayeng.com>"
+  ],
   "license": "MIT",
   "files": [
     "dist/**/*.js",
@@ -22,38 +22,36 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/instantrelay/instant-relay.git"
+    "url": "https://github.com/belayeng/instant-relay.git"
   },
   "bugs": {
-    "url": "http://github.com/instantrelay/instant-relay/issues"
+    "url": "http://github.com/belayeng/instant-relay/issues"
   },
   "engines": {
     "node": ">= 14"
   },
   "keywords": [
-    "web",
     "relay",
     "open",
     "communication",
-    "worker",
-    "iot"
+    "iot",
+    "nodes",
+    "broadcast",
+    "send",
+    "messaging",
+    "queue",
+    "node.js"
   ],
   "devDependencies": {
-    "@types/async": "^3.2.5",
+    "@types/debug": "^4.1.7",
+    "@types/mocha": "^9.0.0",
     "@types/node": "^14.14.32",
-    "@types/pino": "^6.3.6",
-    "chai": "^4.3.3",
-    "eslint": "^7.10.0",
-    "eslint-config-bi-ts-be": "beautifulinteractions/eslint-config-bi-ts-be#6c236beacf7ef3583f352a5af2b0f6ec6a18e030",
-    "eslint-plugin-import": "^2.22.1",
-    "husky": "^6.0.0",
-    "mocha": "^8.3.1",
-    "nyc": "^15.1.0",
+    "mocha": "^9.1.4",
+    "ts-node": "^10.4.0",
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "async": "^3.2.0",
-    "nanoid": "^3.1.20",
-    "pino": "^6.11.1"
+    "debug": "^4.3.3",
+    "fastq": "^1.13.0"
   }
 }

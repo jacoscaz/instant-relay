@@ -15,5 +15,6 @@
     "removeComments": false,
     "allowJs": false,
     "esModuleInterop": true
-  }
+  },
+  "include": ["./src/**/*"]
 }

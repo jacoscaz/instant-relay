@@ -1,21 +1,37 @@
-import fastq from 'fastq';
-import {InternalMessage} from './internalMessage';
 
-export type Receive = (msg: InternalMessage, callback: Callback) => void;
-export type Callback = (err?: Error | null, data?: unknown) => void;
-export type Send = (msg: InternalMessage, callback: Callback) => void;
-
-export interface Queue {
-  recipientId: string,
-  queue: fastq.queue<InternalMessage, unknown>,
+export interface Callback {
+  (err?: Error | null | undefined): any;
 }
 
-export interface IRNode {
-  id: string,
-  elaborate: Receive,
+export interface HandleMessage<M extends Message> {
+  (message: M, done: Callback): void;
 }
 
-export interface RoutingConf {
-  senderId: string,
-  allowedRecipientIds: string[],
+export interface SendMessage<M extends Message> {
+  (recipient: string, message: M, done: Callback): void;
 }
+
+export interface BroadcastMessage<M extends Message> {
+  (message: M, done: Callback): void;
+}
+
+export interface NodeFactory<M extends Message, O extends Record<string, any>> {
+  (send: SendMessage<M>, broadcast: BroadcastMessage<M>, opts: O & { id: string }): HandleMessage<M>;
+}
+
+export interface Message {
+  id: string;
+  type: string;
+}
+
+export interface AddNodeOpts {
+  throttle?: (len: number) => number;
+  concurrency?: number;
+  highWaterMark?: number;
+}
+
+export interface InternalNode<M extends Message> {
+  readonly id: string;
+  readonly push: (message: M, done: Callback) => void;
+}
+

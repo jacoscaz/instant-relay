@@ -6,12 +6,12 @@ export const crashWithError = (err: Error) => {
   process.exit(1);
 };
 
-export const forEach = <T>(items: T[] | Record<string, T>, iterator: (item: T, next: Callback) => any, done: Callback) => {
-  if (items.length === 0) {
+export const forEach = <T>(items: Map<string, T>, iterator: (item: T, next: Callback) => any, done: Callback) => {
+  let size = items.size;
+  if (size === 0) {
     done();
     return;
   }
-  let count = 0;
   let returned = false;
   const next = (err: Error | null | undefined) => {
     if (returned) {
@@ -22,23 +22,13 @@ export const forEach = <T>(items: T[] | Record<string, T>, iterator: (item: T, n
       done(err);
       return;
     }
-    count += 1;
-    if (count === items.length) {
+    size -= 1;
+    if (size === 0) {
       returned = true;
       done();
     }
   };
-  if (Array.isArray(items)) {
-    for (let i = 0, l = items.length; i < l; i += 1) {
-      iterator(items[i], next);
-    }
-  } else {
-    for (const key in items) {
-      if (Object.prototype.hasOwnProperty.call(items, key)) {
-        iterator(items[key], next);
-      }
-    }
-  }
+  items.forEach((item: T) => iterator(item, next));
 };
 
 /*

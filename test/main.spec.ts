@@ -129,7 +129,7 @@ describe('instant-relay', () => {
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.a.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodes.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
       });
 
     });
@@ -161,7 +161,7 @@ describe('instant-relay', () => {
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.a.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodes.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
       });
 
     });

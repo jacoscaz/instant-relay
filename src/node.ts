@@ -15,21 +15,21 @@ import { forEach, crashWithError } from './utils';
 
 const dbg = debug('instant-relay');
 
-const makeSend = <M extends Message>(nodes: Record<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
+const makeSend = <M extends Message>(nodes: Map<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
   return (recipientId: string, message: M, done: Callback) => {
     if (recipientId === senderId) {
       crashWithError(new Error(`Node "${senderId}" tried to send a message to itself`));
     }
-    const recipient = nodes[recipientId];
-    if (!recipient) {
+    if (!nodes.has(recipientId)) {
       crashWithError(new Error(`Unknown node with id "${recipientId}"`));
     }
+    const recipient = nodes.get(recipientId)!;
     dbg('SEND | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
     recipient.push(message, done);
   };
 };
 
-const makeBroadcast = <M extends Message>(nodes: Record<string, InternalNode<M>>, senderId: string): BroadcastMessage<M> => {
+const makeBroadcast = <M extends Message>(nodes: Map<string, InternalNode<M>>, senderId: string): BroadcastMessage<M> => {
   return (message: M, done: Callback) => {
     forEach(nodes, (recipient, next) => {
       if (recipient.id !== senderId) {
@@ -43,7 +43,7 @@ const makeBroadcast = <M extends Message>(nodes: Record<string, InternalNode<M>>
 };
 
 export const makeNode = <M extends Message, O>(
-  nodes: Record<string, InternalNode<M>>,
+  nodes: Map<string, InternalNode<M>>,
   id: string,
   factory: NodeFactory<M, O>,
   opts: AddNodeOpts & O,

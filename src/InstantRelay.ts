@@ -10,10 +10,10 @@ import { makeNode } from './node';
 
 export class InstantRelay<M extends Message> {
 
-  private readonly nodes: Record<string, InternalNode<M>>;
+  private readonly nodes: Map<string, InternalNode<M>>;
 
   constructor() {
-    this.nodes = Object.create(null);
+    this.nodes = new Map();
   }
 
   addNode<O>(
@@ -21,10 +21,10 @@ export class InstantRelay<M extends Message> {
     factory: NodeFactory<M, O>,
     opts: AddNodeOpts & O,
   ) {
-    if (this.nodes[id]) {
+    if (this.nodes.has(id)) {
       crashWithError(new Error(`id "${id}" already in use`));
     }
-    this.nodes[id] = makeNode<M, O>(this.nodes, id, factory, opts);
+    this.nodes.set(id, makeNode<M, O>(this.nodes, id, factory, opts));
   }
 
 }

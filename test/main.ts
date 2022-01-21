@@ -104,4 +104,68 @@ describe('instant-relay', () => {
 
   });
 
+  describe('topologies', () => {
+
+    it('circular topology, two nodes, blocking chain', (testDone) => {
+
+      const ir = new InstantRelay();
+
+      ir.addNode('a', (send, broadcast) => {
+        let recvd = 0;
+        return (message, done) => {
+          recvd += 1;
+          if (recvd === 20) {
+            done();
+            testDone();
+            return;
+          }
+          send('b', message, done);
+        };
+      }, {});
+
+      ir.addNode('b', (send, broadcast) => {
+        return (message, done) => { send('a', message, done); };
+      }, {});
+
+      setImmediate(() => {
+        // @ts-ignore
+        ir.nodes.a.push({ id: '0', type: 'greeting' }, () => {});
+      });
+
+    });
+
+    it('circular topology, three nodes, blocking chain', (testDone) => {
+
+      const ir = new InstantRelay();
+
+      ir.addNode('a', (send, broadcast) => {
+        let recvd = 0;
+        return (message, done) => {
+          recvd += 1;
+          if (recvd === 20) {
+            done();
+            testDone();
+            return;
+          }
+          send('b', message, done);
+        };
+      }, {});
+
+      ir.addNode('b', (send, broadcast) => {
+        return (message, done) => { send('c', message, done); };
+      }, {});
+
+      ir.addNode('c', (send, broadcast) => {
+        return (message, done) => { send('a', message, done); };
+      }, {});
+
+      setImmediate(() => {
+        // @ts-ignore
+        ir.nodes.a.push({ id: '0', type: 'greeting' }, () => {});
+      });
+
+    });
+
+  });
+
 });

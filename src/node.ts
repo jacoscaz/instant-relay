@@ -11,18 +11,18 @@ import type {
 
 import fastq from 'fastq';
 import debug from 'debug';
-import { forEach } from './utils';
+import { forEach, crashWithError } from './utils';
 
 const dbg = debug('instant-relay');
 
 const makeSend = <M extends Message>(nodes: Record<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
   return (recipientId: string, message: M, done: Callback) => {
     if (recipientId === senderId) {
-      throw new Error(`Node "${senderId}" tried to send a message to itself`);
+      crashWithError(new Error(`Node "${senderId}" tried to send a message to itself`));
     }
     const recipient = nodes[recipientId];
     if (!recipient) {
-      throw new Error(`Unknown node with id "${recipientId}"`);
+      crashWithError(new Error(`Unknown node with id "${recipientId}"`));
     }
     dbg('SEND | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
     recipient.push(message, done);
@@ -64,7 +64,7 @@ export const makeNode = <M extends Message, O>(
       dbg('PROC | node', id, 'msg', msg.id, 'type', msg.type);
       handlingQueueLength -= 1;
       if (err) {
-        throw err;
+        crashWithError(err);
       }
       done(null);
     });

@@ -1,6 +1,11 @@
 
 import { Callback } from './types';
 
+export const crashWithError = (err: Error) => {
+  console.error(err);
+  process.exit(1);
+};
+
 export const forEach = <T>(items: T[] | Record<string, T>, iterator: (item: T, next: Callback) => any, done: Callback) => {
   if (items.length === 0) {
     done();

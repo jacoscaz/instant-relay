@@ -5,7 +5,7 @@ import type {
   AddNodeOpts,
   InternalNode,
 } from './types';
-
+import { crashWithError } from './utils';
 import { makeNode } from './node';
 
 export class InstantRelay<M extends Message> {
@@ -22,7 +22,7 @@ export class InstantRelay<M extends Message> {
     opts: AddNodeOpts & O,
   ) {
     if (this.nodes[id]) {
-      throw new Error(`id "${id}" already in use`)
+      crashWithError(new Error(`id "${id}" already in use`));
     }
     this.nodes[id] = makeNode<M, O>(this.nodes, id, factory, opts);
   }

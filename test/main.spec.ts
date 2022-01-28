@@ -1,5 +1,5 @@
 
-import assert, { strictEqual, deepStrictEqual } from 'assert';
+import assert, { strictEqual } from 'assert';
 import { InstantRelay, Message, NodeFactory } from '..';
 
 const noop = () => {};
@@ -10,48 +10,19 @@ describe('instant-relay', () => {
 
     it('should send a message to another node', (testDone) => {
       const ir = new InstantRelay();
+      const msg = { id: '1', type: 'msg' };
       ir.addNode('a', (send, broadcast) => {
         setImmediate(() => {
-          send('b', { id: '1', type: 'msg'}, noop);
+          send('b', msg, noop);
         });
         return () => {};
       }, {});
       ir.addNode('b', (send, broadcast) => {
         return (message, done) => {
-          deepStrictEqual(message, { id: '1', type: 'msg' }, 'unexpected message');
+          strictEqual(message, msg);
           done();
           testDone();
         };
-      }, {});
-    });
-
-    it('should be throttled if the receiver is slower than the sender', (testDone) => {
-      const ir = new InstantRelay();
-      ir.addNode('r', (send, broadcast) => {
-        return (message, done) => {};
-      }, { concurrency: 1, highWaterMark: 16, throttle: len => len * 2 });
-      ir.addNode('s', (send, broadcast) => {
-        let sent = 0;
-        let prevDelta = 0, delta = 0, before = 0, after = 0;
-        const loop = () => {
-          before = Date.now();
-          send('r', { id: sent + '', type: 'hello' }, () => {
-            after = Date.now();
-            delta = after - before;
-            if (sent >= 16) {
-              assert(delta >= prevDelta);
-              prevDelta = delta;
-            }
-            if (sent >= 32) {
-              testDone();
-              return;
-            }
-            sent += 1;
-            setImmediate(loop);
-          });
-        };
-        setImmediate(loop);
-        return (message, done) => {};
       }, {});
     });
 
@@ -61,15 +32,16 @@ describe('instant-relay', () => {
 
     it('should broadcast a message from one node to another', (testDone) => {
       const ir = new InstantRelay();
+      const msg = { id: '1', type: 'msg'};
       ir.addNode('a', (send, broadcast) => {
         setImmediate(() => {
-          broadcast({ id: '1', type: 'msg'}, noop);
+          broadcast(msg, noop);
         });
         return () => {};
       }, {});
       ir.addNode('b', (send, broadcast) => {
         return (message, done) => {
-          deepStrictEqual(message, { id: '1', type: 'msg' }, 'unexpected message');
+          strictEqual(message, msg, 'unexpected message');
           done();
           testDone();
         };
@@ -80,10 +52,10 @@ describe('instant-relay', () => {
       const ir = new InstantRelay();
       let receivedCount = 0;
       const receiverQty = 3;
-      const message: Message = { id: '1', type: 'msg'};
+      const msg: Message = { id: '1', type: 'msg'};
       const receiverFactory: NodeFactory<any, {}> = () => {
         return (receivedMessage, done) => {
-          strictEqual(message, receivedMessage);
+          strictEqual(msg, receivedMessage);
           receivedCount += 1;
           done();
           if (receivedCount >= receiverQty) {
@@ -96,10 +68,64 @@ describe('instant-relay', () => {
       }
       ir.addNode('broadcaster', (send, broadcast) => {
         setImmediate(() => {
-          broadcast(message, noop);
+          broadcast(msg, noop);
         });
         return () => {};
       }, {});
+    });
+
+  });
+
+  describe('backpressure', () => {
+
+    it('should throttle once the high-water mark is reached', (testDone) => {
+      const ir = new InstantRelay();
+      const opts = {
+        concurrency: 1,
+        highWaterMark: 3,
+        throttle: (len: number) => {
+          strictEqual(len, 3);
+          testDone();
+          return 0;
+        },
+      };
+      ir.addNode('r', (send, broadcast) => {
+        return (message, done) => {};
+      }, opts);
+      for (let i = 0; i < 4; i += 1) {
+        // @ts-ignore
+        ir.nodes.get('r')!.push({ id: i + '', type: 'msg' }, () => {});
+      }
+    });
+
+    it('throttling should result in higher latencies for pushers', (testDone) => {
+      const ir = new InstantRelay();
+      ir.addNode('r', (send, broadcast) => {
+        return (message, done) => {};
+      }, { highWaterMark: 1, throttle: (len: number) => len * 5 });
+      let prevTstmp = Date.now();
+      let currTstmp = prevTstmp;
+      let prevDelta = 0;
+      let currDelta = 0;
+      let count = 0;
+      const loop = () => {
+        count += 1;
+        // @ts-ignore
+        ir.nodes.get('r')!.push({ id: count + '', type: 'msg' }, () => {
+          currTstmp = Date.now();
+          currDelta = currTstmp - prevTstmp;
+          assert(currDelta > prevDelta);
+          prevTstmp = currTstmp;
+          prevDelta = currDelta;
+          if (count === 10) {
+            testDone();
+          } else {
+            loop();
+          }
+        });
+      };
+      // @ts-ignore
+      ir.nodes.get('r')!.push({ id: count + '', type: 'msg' }, loop);
     });
 
   });

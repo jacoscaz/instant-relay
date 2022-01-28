@@ -47,3 +47,4 @@ const clientFactory: NodeFactory<Messages, {}> = (send, broadcast, opts) => {
 };
 
 relay.addNode('client', clientFactory, {});
+

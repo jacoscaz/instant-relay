@@ -18,7 +18,11 @@ Node.js, with the following priorities in mind:
 
 `instant-relay` is a work-in-progress and is currently being tested and refined
 in pre-production environments. It was born out of the convergence of previous
-projects in the space of multi-protocol gateways for the IoT sector
+projects in the space of multi-protocol gateways for the IoT sector.
+
+`instant-relay` development is supported by [Belay Engineering][1]. <br>
+[<img src="https://belayeng.com/assets/images/logo/logo-positivo-rgb.svg" alt="Belay Engineerin's logo, the letter B made out of a continuous line" height="70">][1]
+
 
 ## How to use
 
@@ -98,3 +102,5 @@ DEBUG="instant-relay*" node index.js
 ## License
 
 Licensed under [MIT](./LICENSE).
+
+[1]: https://belayeng.com/en

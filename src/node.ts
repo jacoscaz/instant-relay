@@ -30,15 +30,16 @@ const makeSend = <M extends Message>(nodes: Map<string, InternalNode<M>>, sender
 };
 
 const makeBroadcast = <M extends Message>(nodes: Map<string, InternalNode<M>>, senderId: string): BroadcastMessage<M> => {
+  const onEach = (recipient: InternalNode<M>, next: Callback, message: M) => {
+    if (recipient.id !== senderId) {
+      dbg('BCST | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
+      recipient.incomingQueue.push(message, next);
+      return;
+    }
+    next();
+  };
   return (message: M, done: Callback) => {
-    forEach(nodes, (recipient, next) => {
-      if (recipient.id !== senderId) {
-        dbg('BCST | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
-        recipient.incomingQueue.push(message, next);
-        return;
-      }
-      next();
-    }, done);
+    forEach(nodes, onEach, done, message);
   };
 };
 

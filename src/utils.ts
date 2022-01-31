@@ -6,7 +6,7 @@ export const crashWithError = (err: Error) => {
   process.exit(1);
 };
 
-export const forEach = <T>(items: Map<string, T>, iterator: (item: T, next: Callback) => any, done: Callback) => {
+export const forEach = <T, A>(items: Map<string, T>, iterator: (item: T, next: Callback, ...args: A[]) => any, done: Callback, ...args: A[]) => {
   let size = items.size;
   if (size === 0) {
     done();
@@ -28,7 +28,7 @@ export const forEach = <T>(items: Map<string, T>, iterator: (item: T, next: Call
       done();
     }
   };
-  items.forEach((item: T) => iterator(item, next));
+  items.forEach((item: T) => iterator(item, next, ...args));
 };
 
 /*

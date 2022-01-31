@@ -94,7 +94,7 @@ describe('instant-relay', () => {
       }, opts);
       for (let i = 0; i < 4; i += 1) {
         // @ts-ignore
-        ir.nodes.get('r')!.push({ id: i + '', type: 'msg' }, () => {});
+        ir.nodes.get('r')!.incomingQueue.push({ id: i + '', type: 'msg' }, () => {});
       }
     });
 
@@ -111,7 +111,7 @@ describe('instant-relay', () => {
       const loop = () => {
         count += 1;
         // @ts-ignore
-        ir.nodes.get('r')!.push({ id: count + '', type: 'msg' }, () => {
+        ir.nodes.get('r')!.incomingQueue.push({ id: count + '', type: 'msg' }, () => {
           currTstmp = Date.now();
           currDelta = currTstmp - prevTstmp;
           assert(currDelta > prevDelta);
@@ -125,7 +125,7 @@ describe('instant-relay', () => {
         });
       };
       // @ts-ignore
-      ir.nodes.get('r')!.push({ id: count + '', type: 'msg' }, loop);
+      ir.nodes.get('r')!.incomingQueue.push({ id: count + '', type: 'msg' }, loop);
     });
 
   });
@@ -155,7 +155,7 @@ describe('instant-relay', () => {
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodes.get('a')!.incomingQueue.push({ id: '0', type: 'greeting' }, () => {});
       });
 
     });
@@ -187,7 +187,7 @@ describe('instant-relay', () => {
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodes.get('a')!.incomingQueue.push({ id: '0', type: 'greeting' }, () => {});
       });
 
     });

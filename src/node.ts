@@ -25,7 +25,7 @@ const makeSend = <M extends Message>(nodes: Map<string, InternalNode<M>>, sender
     }
     const recipient = nodes.get(recipientId)!;
     dbg('SEND | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
-    recipient.push(message, done);
+    recipient.incomingQueue.push(message, done);
   };
 };
 
@@ -34,7 +34,7 @@ const makeBroadcast = <M extends Message>(nodes: Map<string, InternalNode<M>>, s
     forEach(nodes, (recipient, next) => {
       if (recipient.id !== senderId) {
         dbg('BCST | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
-        recipient.push(message, next);
+        recipient.incomingQueue.push(message, next);
         return;
       }
       next();
@@ -70,24 +70,22 @@ export const makeNode = <M extends Message, O>(
     });
   }, concurrency);
 
+  const onIncomingThrottlingTimeout = (msg: M, done: fastq.done) => {
+    handlingQueue.push(msg);
+    handlingQueueLength += 1;
+    done(null);
+  };
+
   const incomingQueue = fastq((msg: M, done: fastq.done) => {
     if (handlingQueueLength < highWaterMark) {
       handlingQueue.push(msg);
       handlingQueueLength += 1;
       Promise.resolve(null).then(done);
     } else {
-      setTimeout(() => {
-        handlingQueue.push(msg);
-        handlingQueueLength += 1;
-        done(null);
-      }, throttle(handlingQueueLength));
+      setTimeout(onIncomingThrottlingTimeout, throttle(handlingQueueLength), msg, done);
     }
   }, 1);
 
-  const push = (message: M, done: Callback) => {
-    incomingQueue.push(message, done);
-  };
-
-  return { id, push };
+  return { id, incomingQueue };
 
 };

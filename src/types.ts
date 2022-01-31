@@ -1,3 +1,4 @@
+import fastq from 'fastq';
 
 export interface Callback {
   (err?: Error | null | undefined): any;
@@ -32,6 +33,6 @@ export interface AddNodeOpts {
 
 export interface InternalNode<M extends Message> {
   readonly id: string;
-  readonly push: (message: M, done: Callback) => void;
+  readonly incomingQueue: fastq.queue<M>;
 }
 

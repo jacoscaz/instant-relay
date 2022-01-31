@@ -1,6 +1,6 @@
 {
   "name": "instant-relay",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "An opinionated library for asynchronous communication between nodes. Focuses on backpressure management, simplicity, performance.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

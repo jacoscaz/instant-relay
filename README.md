@@ -29,21 +29,25 @@ dedicated factory functions implementing the `NodeFactory` interface.
 import { uid } from 'uid';
 import { InstantRelay, NodeFactory } from 'instant-relay';
 
+// Message types
 interface Request { id: string; type: 'req'; }
 interface Response { type: 'res'; reqId: string; }
 
+// Union of all possible message types
 type Message = Request | Response;
 
+// Promisified setTimeout()
 const wait = (delay: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, delay);
   });
 };
 
+// Main instance
 const relay = new InstantRelay<Message>();
 
+// Factory function for "server" nodes
 const serverFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
-
   return async (message) => {
     switch (message.type) {
       case 'req':
@@ -56,26 +60,24 @@ const serverFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
   };
 };
 
-relay.addNode('server', serverFactory, { 
-  concurrency: 2, 
-  highWaterMark: 2, 
-  throttle: queueLength => queueLength * 10, // When the internal queue grows above highWaterMark,
-                                             // delay responses by 10 times the length of the queue
-                                             // itself in milliseconds
+// Add one "server" node with custom options
+relay.addNode('server', serverFactory, {
+  concurrency: 2,                             // How many messages may be processed in parallel
+  highWaterMark: 2,                           // Threshold above which throttling starts
+  throttle: queueLength => queueLength * 10,  // Set throttling delay based on queue length
 });
 
+// Factory function for "client" nodes
 const clientFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
-
+  // Send loop w/ backpressure support
   const loop = () => {
     const now = Date.now();
     send('server', { id: uid(), type: 'req' }).then(() => {
       console.log('client loop lag', Date.now() - now);
-        setImmediate(loop);
+      setImmediate(loop);
     });
   };
-
   setImmediate(loop);
-
   return async (message) => {
     switch (message.type) {
       case 'res':
@@ -83,7 +85,6 @@ const clientFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
         break;
       default:
     }
-
   };
 };
 

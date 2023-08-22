@@ -1,8 +1,7 @@
 
 import assert, { strictEqual } from 'assert';
-import { InstantRelay, Message, NodeFactory } from '..';
-
-const noop = () => {};
+import { InstantRelay } from './InstantRelay';
+import { NodeFactory } from './types';
 
 describe('instant-relay', () => {
 
@@ -13,14 +12,13 @@ describe('instant-relay', () => {
       const msg = { id: '1', type: 'msg' };
       ir.addNode('a', (send, broadcast) => {
         setImmediate(() => {
-          send('b', msg, noop);
+          send('b', msg);
         });
-        return () => {};
+        return async () => {};
       }, {});
       ir.addNode('b', (send, broadcast) => {
-        return (message, done) => {
+        return async (message) => {
           strictEqual(message, msg);
-          done();
           testDone();
         };
       }, {});
@@ -35,14 +33,13 @@ describe('instant-relay', () => {
       const msg = { id: '1', type: 'msg'};
       ir.addNode('a', (send, broadcast) => {
         setImmediate(() => {
-          broadcast(msg, noop);
+          broadcast(msg);
         });
-        return () => {};
+        return async () => {};
       }, {});
       ir.addNode('b', (send, broadcast) => {
-        return (message, done) => {
+        return async (message) => {
           strictEqual(message, msg, 'unexpected message');
-          done();
           testDone();
         };
       }, {});
@@ -52,12 +49,11 @@ describe('instant-relay', () => {
       const ir = new InstantRelay();
       let receivedCount = 0;
       const receiverQty = 3;
-      const msg: Message = { id: '1', type: 'msg'};
+      const msg = { id: '1', type: 'msg'};
       const receiverFactory: NodeFactory<any, {}> = () => {
-        return (receivedMessage, done) => {
+        return async (receivedMessage) => {
           strictEqual(msg, receivedMessage);
           receivedCount += 1;
-          done();
           if (receivedCount >= receiverQty) {
             testDone();
           }
@@ -68,9 +64,9 @@ describe('instant-relay', () => {
       }
       ir.addNode('broadcaster', (send, broadcast) => {
         setImmediate(() => {
-          broadcast(msg, noop);
+          broadcast(msg);
         });
-        return () => {};
+        return async () => {};
       }, {});
     });
 
@@ -90,18 +86,18 @@ describe('instant-relay', () => {
         },
       };
       ir.addNode('r', (send, broadcast) => {
-        return (message, done) => {};
+        return (message) => new Promise(() => {});
       }, opts);
       for (let i = 0; i < 4; i += 1) {
         // @ts-ignore
-        ir.nodes.get('r')!.incomingQueue.push({ id: i + '', type: 'msg' }, () => {});
+        ir.nodeMap.get('r')!.push({ id: i + '', type: 'msg' });
       }
     });
 
     it('throttling should result in higher latencies for pushers', (testDone) => {
       const ir = new InstantRelay();
       ir.addNode('r', (send, broadcast) => {
-        return (message, done) => {};
+        return (message) => new Promise(() => {});
       }, { highWaterMark: 1, throttle: (len: number) => len * 5 });
       let prevTstmp = Date.now();
       let currTstmp = prevTstmp;
@@ -109,23 +105,24 @@ describe('instant-relay', () => {
       let currDelta = 0;
       let count = 0;
       const loop = () => {
-        count += 1;
         // @ts-ignore
-        ir.nodes.get('r')!.incomingQueue.push({ id: count + '', type: 'msg' }, () => {
+        ir.nodeMap.get('r')!.push({ id: count + '', type: 'msg' }).then(() => {
           currTstmp = Date.now();
           currDelta = currTstmp - prevTstmp;
-          assert(currDelta > prevDelta);
+          if (count > 0) {
+            assert(currDelta > prevDelta, 'Incoherent deltas');
+          }
           prevTstmp = currTstmp;
           prevDelta = currDelta;
+          count += 1;
           if (count === 10) {
             testDone();
           } else {
             loop();
           }
-        });
+        }).catch(testDone);
       };
-      // @ts-ignore
-      ir.nodes.get('r')!.incomingQueue.push({ id: count + '', type: 'msg' }, loop);
+      loop();
     });
 
   });
@@ -138,24 +135,23 @@ describe('instant-relay', () => {
 
       ir.addNode('a', (send, broadcast) => {
         let recvd = 0;
-        return (message, done) => {
+        return async (message) => {
           recvd += 1;
           if (recvd === 20) {
-            done();
             testDone();
             return;
           }
-          send('b', message, done);
+          await send('b', message);
         };
       }, {});
 
       ir.addNode('b', (send, broadcast) => {
-        return (message, done) => { send('a', message, done); };
+        return async (message) => { await send('a', message); };
       }, {});
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.get('a')!.incomingQueue.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodeMap.get('a')!.push({ id: '0', type: 'greeting' });
       });
 
     });
@@ -166,28 +162,27 @@ describe('instant-relay', () => {
 
       ir.addNode('a', (send, broadcast) => {
         let recvd = 0;
-        return (message, done) => {
+        return async (message) => {
           recvd += 1;
           if (recvd === 20) {
-            done();
             testDone();
             return;
           }
-          send('b', message, done);
+          await send('b', message);
         };
       }, {});
 
       ir.addNode('b', (send, broadcast) => {
-        return (message, done) => { send('c', message, done); };
+        return async (message) => { await send('c', message); };
       }, {});
 
       ir.addNode('c', (send, broadcast) => {
-        return (message, done) => { send('a', message, done); };
+        return async (message) => { await send('a', message); };
       }, {});
 
       setImmediate(() => {
         // @ts-ignore
-        ir.nodes.get('a')!.incomingQueue.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodeMap.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
       });
 
     });

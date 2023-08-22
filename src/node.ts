@@ -1,92 +1,79 @@
 
 import type {
   BroadcastMessage,
-  Callback,
   NodeFactory,
   InternalNode,
-  Message,
   AddNodeOpts,
   SendMessage,
 } from './types';
 
 import fastq from 'fastq';
-import debug from 'debug';
-import { forEach, crashWithError } from './utils';
+import { crashWithError, wait } from './utils';
 
-const dbg = debug('instant-relay');
-
-const makeSend = <M extends Message>(nodes: Map<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
-  return (recipientId: string, message: M, done: Callback) => {
+const makeSend = <M>(nodeMap: Map<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
+  return async (recipientId: string, message: M) => {
     if (recipientId === senderId) {
       crashWithError(new Error(`Node "${senderId}" tried to send a message to itself`));
     }
-    if (!nodes.has(recipientId)) {
+    const recipient = nodeMap.get(recipientId);
+    if (!recipient) {
       crashWithError(new Error(`Unknown node with id "${recipientId}"`));
-    }
-    const recipient = nodes.get(recipientId)!;
-    dbg('SEND | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
-    recipient.incomingQueue.push(message, done);
-  };
-};
-
-const makeBroadcast = <M extends Message>(nodes: Map<string, InternalNode<M>>, senderId: string): BroadcastMessage<M> => {
-  const onEach = (recipient: InternalNode<M>, next: Callback, message: M) => {
-    if (recipient.id !== senderId) {
-      dbg('BCST | from', senderId, 'to', recipient.id, 'msg', message.id, 'type', message.type);
-      recipient.incomingQueue.push(message, next);
       return;
     }
-    next();
-  };
-  return (message: M, done: Callback) => {
-    forEach(nodes, onEach, done, message);
+    await recipient.push(message);
   };
 };
 
-export const makeNode = <M extends Message, O>(
-  nodes: Map<string, InternalNode<M>>,
+const makeBroadcast = <M>(nodeArr: InternalNode<M>[], senderId: string): BroadcastMessage<M> => {
+  return async (msg: M) => {
+    await Promise.all(nodeArr.map(node => node.id !== senderId ? node.push(msg) : null));
+  };
+};
+
+export const makeNode = <M, O extends {}>(
+  nodeMap: Map<string, InternalNode<M>>,
+  nodeArr: InternalNode<M>[],
   id: string,
   factory: NodeFactory<M, O>,
   opts: AddNodeOpts & O,
-): InternalNode<M> => {
+) => {
 
+  if (nodeMap.has(id)) {
+    crashWithError(new Error(`id "${id}" already in use`));
+    return;
+  }
+  
   const throttle = opts.throttle || (len => len);
   const concurrency = opts.concurrency || 1;
   const highWaterMark = opts.highWaterMark || 16;
 
-  const send = makeSend(nodes, id);
-  const broadcast = makeBroadcast(nodes, id);
+  const send = makeSend(nodeMap, id);
+  const broadcast = makeBroadcast(nodeArr, id);
   const handleMessage = factory(send, broadcast, { ...opts, id });
 
-  let handlingQueueLength = 0;
+  let queueLength = 0;
 
-  const handlingQueue = fastq((msg: M, done: fastq.done) => {
-    handleMessage(msg, (err) => {
-      dbg('PROC | node', id, 'msg', msg.id, 'type', msg.type);
-      handlingQueueLength -= 1;
-      if (err) {
-        crashWithError(err);
-      }
-      done(null);
-    });
+  const queue = fastq.promise(async (msg: M) => {
+    await handleMessage(msg);
   }, concurrency);
 
-  const onIncomingThrottlingTimeout = (msg: M, done: fastq.done) => {
-    handlingQueue.push(msg);
-    handlingQueueLength += 1;
-    done(null);
+  queue.error((err, task) => {
+    if (err !== null) {
+      crashWithError(err);
+      return;
+    }
+  });
+
+  const push = async (msg: M) => {
+    queue.push(msg);
+    if ((queueLength = queue.length()) >= highWaterMark) {
+      await wait(throttle(queueLength));
+    }
   };
 
-  const incomingQueue = fastq((msg: M, done: fastq.done) => {
-    if (handlingQueueLength < highWaterMark) {
-      handlingQueue.push(msg);
-      handlingQueueLength += 1;
-      Promise.resolve(null).then(done);
-    } else {
-      setTimeout(onIncomingThrottlingTimeout, throttle(handlingQueueLength), msg, done);
-    }
-  }, 1);
+  const node: InternalNode<M> = { id, push };
 
-  return { id, incomingQueue };
+  nodeMap.set(id, node);
+  nodeArr.push(node);
 
 };

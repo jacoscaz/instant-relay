@@ -10,74 +10,78 @@ Node.js, with the following priorities in mind:
    behavior**, addressed by decoupling message delivery from message
    handling and managing backpressure upon delivery.
 2. **Simplicity and ease of debugging**, addressed by a small codebase (~ 300
-   LoCs in total), few dependencies (2 direct, 4 in total) and forcing the use
-   of unique message identifiers to easily track messages as they are passed
-   from node to node.
+   LoCs in total) and few dependencies (1 direct, 2 in total).
 3. **Performance**, addressed by selecting fast data structure implementations
    and reducing the overall number of allocations per handled message.
 
-`instant-relay` is a work-in-progress and is currently being tested and refined
-in pre-production environments. It was born out of the convergence of previous
-projects in the space of multi-protocol gateways for the IoT sector.
-
-`instant-relay` development is supported by [Belay Engineering][1]. <br>
-[<img src="https://belayeng.com/assets/images/logo/logo-positivo-rgb.svg" alt="Belay Engineerin's logo, the letter B made out of a continuous line" height="70">][1]
-
+`instant-relay` was born out of the convergence of previous projects in the
+space of multi-protocol gateways for the IoT sector.
 
 ## How to use
 
 A new relay is created through the `InstantRelay` class, which requires a
-union of possible message types as a type argument. 
-
-Message types _must_ implement the `Message` interface, which mandates the
-presence of the `id` and `type` properties.
+union of possible message types as a type argument.
 
 New nodes can be added to an instance of the `InstantRelay` class by providing
 dedicated factory functions implementing the `NodeFactory` interface.
 
 ```typescript
-import { InstantRelay, Message, NodeFactory, uid } from 'instant-relay';
+import { uid } from 'uid';
+import { InstantRelay, NodeFactory } from 'instant-relay';
 
-interface Request extends Message { type: 'req'; }
-interface Response extends Message { type: 'res'; reqId: string; }
-type Messages = Request | Response;
+interface Request { id: string; type: 'req'; }
+interface Response { type: 'res'; reqId: string; }
 
-const relay = new InstantRelay<Messages>();
+type Message = Request | Response;
 
-const serverFactory: NodeFactory<Messages, {}> = (send, broadcast, opts) => {
+const wait = (delay: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
+};
 
-  return (message, done) => {
+const relay = new InstantRelay<Message>();
+
+const serverFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
+
+  return async (message) => {
     switch (message.type) {
       case 'req':
         console.log(`server received request ${message.id}`);
-        setTimeout(() => {
-          send('client', { id: uid(), type: 'res', reqId: message.id }, done);
-        }, Math.random() * 200);
+        await wait(Math.random() * 1000);
+        await send('client', { type: 'res', reqId: message.id });
         break;
       default:
-        done();
     }
   };
 };
 
 relay.addNode('server', serverFactory, {});
 
-const clientFactory: NodeFactory<Messages, {}> = (send, broadcast, opts) => {
+const clientFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
+
+  let count = 0;
 
   const loop = () => {
-    send('server', { id: uid(), type: 'req' }, loop);
+    send('server', { id: uid(), type: 'req' }).then(() => {
+      if (count < 10) {
+        count += 1;
+        loop()
+      } else {
+        count = 0;
+        setImmediate(loop);
+      }
+    });
   };
 
   setImmediate(loop);
 
-  return (message, done) => {
+  return async (message) => {
     switch (message.type) {
       case 'res':
         console.log(`client received a response for request ${message.reqId}`);
-        done();
         break;
       default:
-        done();
     }
 
   };
@@ -89,18 +93,6 @@ relay.addNode('client', clientFactory, {});
 Due to backpressure support, the loop that sends requests to the server node
 will quickly slow down to a rate compatible with the artificial latency.
 
-## Debug
-
-`instant-relay` uses the `debug` module with the `instant-relay` namespace.
-Debug messages can be enabled by setting the `DEBUG` environment variable as
-follows: 
-
-```shell
-DEBUG="instant-relay*" node index.js
-```
-
 ## License
 
 Licensed under [MIT](./LICENSE).
-
-[1]: https://belayeng.com/en

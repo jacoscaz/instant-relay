@@ -1,30 +1,23 @@
 
-import type {
-  NodeFactory,
-  Message,
-  AddNodeOpts,
-  InternalNode,
-} from './types';
-import { crashWithError } from './utils';
+import type { NodeFactory, AddNodeOpts, InternalNode, } from './types';
 import { makeNode } from './node';
 
-export class InstantRelay<M extends Message> {
+export class InstantRelay<M> {
 
-  private readonly nodes: Map<string, InternalNode<M>>;
+  private readonly nodeMap: Map<string, InternalNode<M>>;
+  private readonly nodeArr: InternalNode<M>[];
 
   constructor() {
-    this.nodes = new Map();
+    this.nodeMap = new Map();
+    this.nodeArr = [];
   }
 
-  addNode<O>(
+  addNode<O extends {}>(
     id: string,
     factory: NodeFactory<M, O>,
     opts: AddNodeOpts & O,
   ) {
-    if (this.nodes.has(id)) {
-      crashWithError(new Error(`id "${id}" already in use`));
-    }
-    this.nodes.set(id, makeNode<M, O>(this.nodes, id, factory, opts));
+    makeNode<M, O>(this.nodeMap, this.nodeArr, id, factory, opts);
   }
 
 }

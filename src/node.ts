@@ -20,13 +20,13 @@ const makeSend = <M>(nodeMap: Map<string, InternalNode<M>>, senderId: string): S
       crashWithError(new Error(`Unknown node with id "${recipientId}"`));
       return;
     }
-    await recipient.push(message);
+    await recipient.queue.push(message);
   };
 };
 
 const makeBroadcast = <M>(nodeArr: InternalNode<M>[], senderId: string): BroadcastMessage<M> => {
   return async (msg: M) => {
-    await Promise.all(nodeArr.map(node => node.id !== senderId ? node.push(msg) : null));
+    await Promise.all(nodeArr.map(node => node.id !== senderId ? node.queue.push(msg) : null));
   };
 };
 
@@ -51,27 +51,25 @@ export const makeNode = <M, O extends {}>(
   const broadcast = makeBroadcast(nodeArr, id);
   const handleMessage = factory(send, broadcast, { ...opts, id });
 
-  let queueLength = 0;
+  const handlingQueue = fastq.promise(handleMessage, concurrency);
 
-  const queue = fastq.promise(async (msg: M) => {
-    await handleMessage(msg);
-  }, concurrency);
-
-  queue.error((err, task) => {
+  handlingQueue.error((err, task) => {
     if (err !== null) {
       crashWithError(err);
       return;
     }
   });
 
-  const push = async (msg: M) => {
-    queue.push(msg);
-    if ((queueLength = queue.length()) >= highWaterMark) {
-      await wait(throttle(queueLength));
-    }
-  };
+  let handlingQueueLength = 0;
 
-  const node: InternalNode<M> = { id, push };
+  const incomingQueue = fastq.promise(async (msg: M) => {
+    handlingQueue.push(msg);
+    if ((handlingQueueLength = handlingQueue.length()) >= highWaterMark) {
+      await wait(throttle(handlingQueueLength));
+    }
+  }, 1);
+
+  const node: InternalNode<M> = { id, queue: incomingQueue };
 
   nodeMap.set(id, node);
   nodeArr.push(node);

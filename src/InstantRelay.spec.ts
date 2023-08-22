@@ -89,8 +89,7 @@ describe('instant-relay', () => {
         return (message) => new Promise(() => {});
       }, opts);
       for (let i = 0; i < 4; i += 1) {
-        // @ts-ignore
-        ir.nodeMap.get('r')!.push({ id: i + '', type: 'msg' });
+        ir.nodeMap.get('r')!.queue.push({ id: i + '', type: 'msg' });
       }
     });
 
@@ -105,8 +104,7 @@ describe('instant-relay', () => {
       let currDelta = 0;
       let count = 0;
       const loop = () => {
-        // @ts-ignore
-        ir.nodeMap.get('r')!.push({ id: count + '', type: 'msg' }).then(() => {
+        ir.nodeMap.get('r')!.queue.push({ id: count + '', type: 'msg' }).then(() => {
           currTstmp = Date.now();
           currDelta = currTstmp - prevTstmp;
           if (count > 0) {
@@ -150,8 +148,7 @@ describe('instant-relay', () => {
       }, {});
 
       setImmediate(() => {
-        // @ts-ignore
-        ir.nodeMap.get('a')!.push({ id: '0', type: 'greeting' });
+        ir.nodeMap.get('a')!.queue.push({ id: '0', type: 'greeting' });
       });
 
     });
@@ -181,8 +178,7 @@ describe('instant-relay', () => {
       }, {});
 
       setImmediate(() => {
-        // @ts-ignore
-        ir.nodeMap.get('a')!.push({ id: '0', type: 'greeting' }, () => {});
+        ir.nodeMap.get('a')!.queue.push({ id: '0', type: 'greeting' });
       });
 
     });

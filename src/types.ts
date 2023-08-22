@@ -1,4 +1,6 @@
 
+import fastq from 'fastq';
+
 export interface HandleMessage<M> {
   (message: M): Promise<void>;
 }
@@ -23,5 +25,5 @@ export interface AddNodeOpts {
 
 export interface InternalNode<M> {
   readonly id: string;
-  readonly push: (msg: M) => Promise<void>;
+  readonly queue: fastq.queueAsPromised<M>;
 }

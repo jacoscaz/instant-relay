@@ -4,8 +4,8 @@ import { makeNode } from './node';
 
 export class InstantRelay<M> {
 
-  private readonly nodeMap: Map<string, InternalNode<M>>;
-  private readonly nodeArr: InternalNode<M>[];
+  readonly nodeMap: Map<string, InternalNode<M>>;
+  readonly nodeArr: InternalNode<M>[];
 
   constructor() {
     this.nodeMap = new Map();

@@ -56,21 +56,21 @@ const serverFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
   };
 };
 
-relay.addNode('server', serverFactory, {});
+relay.addNode('server', serverFactory, { 
+  concurrency: 2, 
+  highWaterMark: 2, 
+  throttle: queueLength => queueLength * 10, // When the internal queue grows above highWaterMark,
+                                             // delay responses by 10 times the length of the queue
+                                             // itself in milliseconds
+});
 
 const clientFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
 
-  let count = 0;
-
   const loop = () => {
+    const now = Date.now();
     send('server', { id: uid(), type: 'req' }).then(() => {
-      if (count < 10) {
-        count += 1;
-        loop()
-      } else {
-        count = 0;
+      console.log('client loop lag', Date.now() - now);
         setImmediate(loop);
-      }
     });
   };
 

@@ -22,13 +22,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/belayeng/instant-relay.git"
+    "url": "https://github.com/jacoscaz/instant-relay.git"
   },
   "bugs": {
-    "url": "http://github.com/belayeng/instant-relay/issues"
-  },
-  "engines": {
-    "node": ">= 14"
+    "url": "http://github.com/jacoscaz/instant-relay/issues"
   },
   "keywords": [
     "relay",

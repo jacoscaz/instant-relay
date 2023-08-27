@@ -1,7 +1,12 @@
 
+const isNode = typeof process !== 'undefined'
+  && process?.release?.name === 'node';
+
 export const crashWithError = (err: Error) => {
   console.error(err);
-  process.exit(1);
+  if (isNode) {
+    process.exit(1);
+  }
 };
 
 export const wait = (delay: number) => {

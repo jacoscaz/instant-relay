@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc",
-    "test": "mocha dist/cjs/*.spec.js"
+    "test": "mocha dist/*.spec.js"
   },
   "author": "Jacopo Scazzosi <jacopo@scazzosi.com>",
   "contributors": [

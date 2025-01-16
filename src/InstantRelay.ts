@@ -1,6 +1,6 @@
 
-import type { NodeFactory, AddNodeOpts, InternalNode, } from './types';
-import { makeNode } from './node';
+import type { NodeFactory, AddNodeOpts, InternalNode, } from './types.js';
+import { makeNode } from './node.js';
 
 export class InstantRelay<M> {
 

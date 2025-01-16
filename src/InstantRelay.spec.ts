@@ -1,7 +1,9 @@
 
+import type { NodeFactory } from './types.js';
+
 import assert, { strictEqual } from 'assert';
-import { InstantRelay } from './InstantRelay';
-import { NodeFactory } from './types';
+import { InstantRelay } from './InstantRelay.js';
+
 
 describe('instant-relay', () => {
 

@@ -6,6 +6,6 @@ export type {
   HandleMessage,
   BroadcastMessage,
   AddNodeOpts,
-} from './types';
+} from './types.js';
 
-export { InstantRelay } from './InstantRelay';
+export { InstantRelay } from './InstantRelay.js';

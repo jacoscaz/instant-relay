@@ -5,10 +5,10 @@ import type {
   InternalNode,
   AddNodeOpts,
   SendMessage,
-} from './types';
+} from './types.js';
 
 import fastq from 'fastq';
-import { crashWithError, wait } from './utils';
+import { crashWithError, wait } from './utils.js';
 
 const makeSend = <M>(nodeMap: Map<string, InternalNode<M>>, senderId: string): SendMessage<M> => {
   return async (recipientId: string, message: M) => {
@@ -43,7 +43,7 @@ export const makeNode = <M, O extends {}>(
     return;
   }
   
-  const throttle = opts.throttle || (len => len);
+  const throttle = opts.throttle || ((len: number) => len);
   const concurrency = opts.concurrency || 1;
   const highWaterMark = opts.highWaterMark || 16;
 

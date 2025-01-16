@@ -2,13 +2,11 @@
   "name": "instant-relay",
   "version": "1.0.0",
   "description": "An opinionated library for asynchronous communication between nodes. Focuses on backpressure management, simplicity, performance.",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
-    "build:esm": "tsc -p tsconfig.esm.json && echo '{\"type\": \"module\"}' > dist/esm/package.json",
-    "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
-    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build": "tsc",
     "test": "mocha dist/cjs/*.spec.js"
   },
   "author": "Jacopo Scazzosi <jacopo@scazzosi.com>",
@@ -37,12 +35,12 @@
     "node.js"
   ],
   "devDependencies": {
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^20.5.6",
-    "mocha": "^10.2.0",
-    "typescript": "^5.2.2"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.7",
+    "mocha": "^11.0.1",
+    "typescript": "^5.7.3"
   },
   "dependencies": {
-    "fastq": "^1.15.0"
+    "fastq": "^1.18.0"
   }
 }

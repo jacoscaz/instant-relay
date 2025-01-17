@@ -1,8 +1,8 @@
 
 # instant-relay
 
-`instant-relay` is an opinionated library for asynchronous communication
-between nodes in non-hierarchical sets. It offers primitives to build all 
+`instant-relay` is an opinionated library for intra-process asynchronous
+communication. It offers simple primitives that may be used to build many
 kinds of graph topologies. It is written in TypeScript with the following
 priorities in mind:
 
@@ -25,92 +25,50 @@ space of multi-protocol gateways for the IoT sector.
 import { Bus, Subscriber } from 'instant-relay';
 ```
 
-A **`Bus`** is a strongly-typed communication channel which multiple consumers
-may subscribe to and which multiple produces may publish to. Each bus is typed
-according to which messages may be published to it.
+### The `Bus` class
+
+A `Bus` is a strongly-typed communication channel which multiple consumers
+may subscribe to and which multiple producers may publish to. Each bus is
+typed according to which messages may be published to it.
 
 ```ts
 const number_bus = new Bus<number>();
-number_publish(Math.random());
+number_bus.publish(Math.random());
 ```
 
+`Bus` instances are backpressure-aware; the `Bus.prototype.publish()` method 
+returns a promise that resolves when it is safe to publish additional messages.
 
-
-
-A new relay is created through the `InstantRelay` class, which requires a
-union of possible message types as a type argument.
-
-New nodes can be added to an instance of the `InstantRelay` class by providing
-dedicated factory functions implementing the `NodeFactory` interface.
-
-```typescript
-import { uid } from 'uid';
-import { InstantRelay, NodeFactory } from 'instant-relay';
-
-// Message types
-interface Request { id: string; type: 'req'; }
-interface Response { type: 'res'; reqId: string; }
-
-// Union of all possible message types
-type Message = Request | Response;
-
-// Promisified setTimeout()
-const wait = (delay: number) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delay);
-  });
+```ts
+const number_bus = new Bus<number>();
+const publish_loop = () => {
+  number_bus.publish(Math.random()).then(() => publish_loop);
 };
+publish_loop();
+```
 
-// Main instance
-const relay = new InstantRelay<Message>();
+In the example above, the loop slows down to match the consumption rate of the
+subscribers to `number_bus` (dictated by the slowest subscriber).
 
-// Factory function for "server" nodes
-const serverFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
-  return async (message) => {
-    switch (message.type) {
-      case 'req':
-        console.log(`server received request ${message.id}`);
-        await wait(Math.random() * 1000);
-        await send('client', { type: 'res', reqId: message.id });
-        break;
-      default:
-    }
-  };
-};
+### The `Subscriber` class
 
-// Add one "server" node with custom options
-relay.addNode('server', serverFactory, {
-  concurrency: 2,                             // How many messages may be processed in parallel
-  highWaterMark: 2,                           // Threshold above which throttling starts
-  throttle: queueLength => queueLength * 10,  // Set throttling delay based on queue length
+The `Subscriber` class may be used to create subscribers to one or more `Bus`
+instances out of a single handler function. The TS compiler will automatically
+infer the type of the message passed to the handler function based on the 
+provided `Bus` instances.
+
+```ts
+const number_bus = new Bus<number>();
+const boolean_bus = new Bus<boolean>();
+
+Subscriber.create([number_bus, boolean_bus], async (message) => {
+  // This will make the TS compiler throw an error
+  // as the type of message is `number | boolean`
+  // and must be narrowed further before treating
+  // it as a number.
+  message + 2;
 });
-
-// Factory function for "client" nodes
-const clientFactory: NodeFactory<Message, {}> = (send, broadcast, opts) => {
-  // Send loop w/ backpressure support
-  const loop = () => {
-    const now = Date.now();
-    send('server', { id: uid(), type: 'req' }).then(() => {
-      console.log('client loop lag', Date.now() - now);
-      setImmediate(loop);
-    });
-  };
-  setImmediate(loop);
-  return async (message) => {
-    switch (message.type) {
-      case 'res':
-        console.log(`client received a response for request ${message.reqId}`);
-        break;
-      default:
-    }
-  };
-};
-
-relay.addNode('client', clientFactory, {});
 ```
-
-Due to backpressure support, the loop that sends requests to the server node
-will quickly slow down to a rate compatible with the artificial latency.
 
 ## License
 

@@ -2,9 +2,9 @@
 # instant-relay
 
 `instant-relay` is an opinionated library for asynchronous communication
-between nodes in non-hierarchical sets. Each registered node can send 
-(one-to-one) or broadcast (one-to-many). It is written in TypeScript for
-Node.js, with the following priorities in mind:
+between nodes in non-hierarchical sets. It offers primitives to build all 
+kinds of graph topologies. It is written in TypeScript with the following
+priorities in mind:
 
 1. **Backpressure management and prevention of accidental blocking 
    behavior**, addressed by decoupling message delivery from message
@@ -18,6 +18,24 @@ Node.js, with the following priorities in mind:
 space of multi-protocol gateways for the IoT sector.
 
 ## How to use
+
+`instant-relay` exports two primitives as classes: `Bus` and `Subscriber`.
+
+```ts
+import { Bus, Subscriber } from 'instant-relay';
+```
+
+A **`Bus`** is a strongly-typed communication channel which multiple consumers
+may subscribe to and which multiple produces may publish to. Each bus is typed
+according to which messages may be published to it.
+
+```ts
+const number_bus = new Bus<number>();
+number_publish(Math.random());
+```
+
+
+
 
 A new relay is created through the `InstantRelay` class, which requires a
 union of possible message types as a type argument.

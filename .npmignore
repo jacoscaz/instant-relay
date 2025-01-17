@@ -1,9 +1,6 @@
-dist/**/*.spec.js
-dist/**/*.spec.d.ts
-dist/**/*.spec.js.map
+dist/tests/*
+dist/examples/*
 dist/**/*.js.map
-dist/howto.*
 src
-tsconfig.*.json
-.eslintrc
+tsconfig.json
 .github

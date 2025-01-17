@@ -2,14 +2,7 @@
 import type { Bus } from './bus.js';
 
 import fastq from 'fastq';
-import { wait, asyncNoop, EMPTY_OBJ } from './utils.js';
-
-type WaitFn = (len: number, throttle: Subscriber.ThrottleFn) => Promise<any>;
-
-const wait_fns_by_boolean = new Map<boolean, WaitFn>([
-  [true, (len, throttle) => wait(throttle(len))], 
-  [false, asyncNoop],
-]);
+import { EMPTY_OBJ, crashIfError, noop } from './utils.js';
 
 export namespace Subscriber {
 
@@ -19,6 +12,7 @@ export namespace Subscriber {
 
   export interface Opts {
     throttle?: ThrottleFn;
+    concurrency?: number;
     high_watermark?: number;
   }
 
@@ -27,31 +21,36 @@ export namespace Subscriber {
 export class Subscriber<M> {
 
   #queue: fastq.queueAsPromised<M>;
-  #throttle: Subscriber.ThrottleFn;
-  #message_handler: Subscriber.MessageHandler<M>;
+  #deferred: () => any;
   #high_watermark: number;
 
   private constructor(message_handler: Subscriber.MessageHandler<M>, opts: Subscriber.Opts = EMPTY_OBJ) {
-    this.#queue = fastq.promise<Subscriber<M>, M>(this, Subscriber.processQueueItem, 1);
-    this.#throttle = opts.throttle ?? ((len: number) => len);
-    this.#message_handler = message_handler;
+    this.#queue = fastq.promise<Subscriber<M>, M>(this, message_handler, opts.concurrency ?? 1);
     this.#high_watermark = opts.high_watermark ?? 16;
+    this.#queue.error(crashIfError);
+    this.#queue.empty = this.#onEmptyQueue;
+    this.#deferred = noop;
   }
 
-  private static async processQueueItem<M>(this: Subscriber<M>, message: M) {
-    await this.#message_handler(message);
-  }
+  #onEmptyQueue = () => {
+    this.#deferred();
+    this.#deferred = noop;
+  };
 
   public async dispatch(message: M) {
     this.#queue.push(message);
-    const len = this.#queue.length();
-    await wait_fns_by_boolean.get(Math.min(len, this.#high_watermark) === this.#high_watermark)!(len, this.#throttle);
+    if (this.#queue.length() < this.#high_watermark) {
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      this.#deferred = resolve;
+    });
   }
 
   public static create<T>(buses: Bus<T>[], handler: Subscriber.MessageHandler<T>, opts: Subscriber.Opts = EMPTY_OBJ) {
     const subscriber = new Subscriber(handler, opts);  
     buses.forEach((bus) => {
-      bus.registerRecipientNode(subscriber);
+      bus.addSubscriber(subscriber);
     });
   };
 

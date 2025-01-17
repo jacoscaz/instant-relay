@@ -2,22 +2,18 @@
 export const isNode = typeof process !== 'undefined'
   && process?.release?.name === 'node';
 
-export const crashWithError = (err: Error) => {
-  if (isNode) {
-    console.error(err);
-    process.exit(1);
+export const crashIfError = (err?: Error | null | undefined) => {
+  if (err) {
+    if (isNode) {
+      console.error(err);
+      process.exit(1);
+    }
+    throw err;
   }
-  throw err;
 };
 
-export const wait = (delay: number) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delay);
-  });
-};
+export const EMPTY_OBJ = Object.freeze(Object.create(null));
 
 export const RESOLVED = Promise.resolve();
 
-export const asyncNoop = () => RESOLVED;
-
-export const EMPTY_OBJ = Object.freeze(Object.create(null));
+export const noop = () => {};

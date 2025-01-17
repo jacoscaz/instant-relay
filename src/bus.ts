@@ -20,7 +20,7 @@ export class Bus<M> {
 
   constructor(opts = EMPTY_OBJ) {
     this.#queue = fastq.promise<Bus<M>, M>(this, Bus.processQueueItem, opts.concurrency ?? 1);
-    this.#dispatch = Bus.dispatchToNone;
+    this.#dispatch = noop;
     this.#subscribers = [];
     this.#queue.error(crashIfError);
   }
@@ -51,10 +51,6 @@ export class Bus<M> {
       case 1: this.#dispatch = Bus.dispatchToFirst; break;
       default: this.#dispatch = Bus.dispatchToAll;
     }
-  }
-
-  private static async dispatchToNone<M>(this: Bus<M>, message: M) {
-    // noop
   }
 
   private static async dispatchToFirst<M>(this: Bus<M>, message: M) {

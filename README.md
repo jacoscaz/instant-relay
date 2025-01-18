@@ -1,10 +1,11 @@
 
 # instant-relay
 
-`instant-relay` is an opinionated library for intra-process asynchronous
-communication. It offers simple primitives that may be used to build many
-kinds of graph topologies. It is written in TypeScript with the following
-priorities in mind:
+`instant-relay` is an opinionated library of primitives for intra-process
+asynchronous communication. It provides foundational building blocks that
+may combined to form any desired topology.
+
+## Features
 
 1. **Backpressure management and prevention of accidental blocking 
    behavior**, addressed by decoupling message delivery from message
@@ -19,7 +20,7 @@ space of multi-protocol gateways for the IoT sector.
 
 ## How to use
 
-`instant-relay` exports two primitives as classes: `Bus` and `Subscriber`.
+`instant-relay` exports two primitive classes: `Bus` and `Subscriber`.
 
 ```ts
 import { Bus, Subscriber } from 'instant-relay';
@@ -29,7 +30,7 @@ import { Bus, Subscriber } from 'instant-relay';
 
 A `Bus` is a strongly-typed communication channel which multiple consumers
 may subscribe to and which multiple producers may publish to. Each bus is
-typed according to which messages may be published to it.
+typed according to the message that may be published to it.
 
 ```ts
 const number_bus = new Bus<number>();
@@ -42,13 +43,13 @@ returns a promise that resolves when it is safe to publish additional messages.
 ```ts
 const number_bus = new Bus<number>();
 const publish_loop = () => {
-  number_bus.publish(Math.random()).then(() => publish_loop);
+  number_bus.publish(Math.random()).then(publish_loop);
 };
 publish_loop();
 ```
 
-In the example above, the loop slows down to match the consumption rate of the
-subscribers to `number_bus` (dictated by the slowest subscriber).
+In the example above, the loop will match the consumption rate of subscribers
+to `number_bus`, dictated by the slowest subscriber.
 
 ### The `Subscriber` class
 
@@ -61,7 +62,7 @@ provided `Bus` instances.
 const number_bus = new Bus<number>();
 const boolean_bus = new Bus<boolean>();
 
-Subscriber.create([number_bus, boolean_bus], async (message) => {
+const subscriber = Subscriber.create([number_bus, boolean_bus], async (message) => {
   // This will make the TS compiler throw an error
   // as the type of message is `number | boolean`
   // and must be narrowed further before treating

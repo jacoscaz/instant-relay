@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc",
+    "build": "npm run clean && tsc",
     "test": "mocha dist/**/*.spec.js"
   },
   "author": "Jacopo Scazzosi <jacopo@scazzosi.com>",

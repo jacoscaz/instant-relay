@@ -1,6 +1,7 @@
 
 import assert, { strictEqual } from 'assert';
 import { Subscriber, Bus } from '../index.js';
+import { describe, it } from 'mocha';
 
 describe('topologies', () => {
 

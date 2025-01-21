@@ -1,8 +1,8 @@
 
 import type { Bus } from './bus.js';
 
-import fastq from 'fastq';
 import { EventEmitter } from 'node:events';
+import fastq from 'fastq';
 import { EMPTY_OBJ, crashIfError, noop } from './utils.js';
 
 export namespace Subscriber {

@@ -51,6 +51,17 @@ publish_loop();
 In the example above, the loop will match the consumption rate of subscribers
 to `number_bus`, dictated by the slowest subscriber.
 
+The `Bus` constructor accepts an optional `transform` function that, if 
+present, will be applied to every message passing through the instance.
+
+```ts
+const num_to_str_bus = new Bus({ transform: (n: number) => `${n}` });
+```
+
+The TS compiler will, in the presence of a `transform` function, automatically
+infer the type of messages that may be published to the bus and the type of
+subscribers that may subscribe to it.
+
 ### The `Subscriber` class
 
 The `Subscriber` class may be used to create subscribers to one or more `Bus`

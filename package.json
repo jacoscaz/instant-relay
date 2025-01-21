@@ -23,16 +23,16 @@
     "url": "http://github.com/jacoscaz/instant-relay/issues"
   },
   "keywords": [
-    "relay",
-    "open",
+    "async",
+    "asynchronous",
+    "bus",
+    "subscriber",
     "communication",
-    "iot",
-    "nodes",
-    "broadcast",
+    "process",
     "send",
+    "message",
     "messaging",
-    "queue",
-    "node.js"
+    "queue"
   ],
   "devDependencies": {
     "@types/mocha": "^10.0.10",

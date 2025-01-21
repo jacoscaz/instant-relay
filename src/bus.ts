@@ -2,7 +2,7 @@
 import type { Subscriber } from './subscriber.js';
 
 import fastq from 'fastq';
-import { crashIfError, EMPTY_OBJ, noop } from './utils.js';
+import { crashIfError, EMPTY_OBJ, noopAsync } from './utils.js';
 
 
 export namespace Bus {
@@ -20,12 +20,12 @@ export namespace Bus {
 export class Bus<I, O = I> {
  
   #queue: fastq.queueAsPromised<I>;
-  #dispatch: (this: Bus<I, O>, message: O) => Promise<any> | any;
+  #dispatch: (this: Bus<I, O>, message: O) => Promise<any>;
   #subscribers: Subscriber<O>[];
 
   constructor(opts: Bus.Opts<I, O> = EMPTY_OBJ) {
     this.#queue = fastq.promise<Bus<I, O>, I>(this, opts.transform ? this.#makeTransformWorker(opts.transform) : this.#workerThrough, opts.concurrency ?? 1);
-    this.#dispatch = noop;
+    this.#dispatch = noopAsync;
     this.#subscribers = [];
     this.#queue.error(crashIfError);
   }
@@ -67,7 +67,7 @@ export class Bus<I, O = I> {
   #setDispatch() {
     switch (this.#subscribers.length) {
       case 0: 
-        this.#dispatch = noop;
+        this.#dispatch = noopAsync;
         break;
       case 1: 
         this.#dispatch = this.#dispatchToFirst; 

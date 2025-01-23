@@ -79,7 +79,7 @@ export class BusToOne<I = any, SR = any | undefined> extends Bus<I, SR, SR> {
 
   constructor(opts: BusToOne.Opts<I, SR> = EMPTY_OBJ) {
     super(opts);
-    this._selector = opts.selector ?? new BusToOne.LowestLagSelector();
+    this._selector = opts.selector ?? new BusToOne.RoundRobinSelector();
   }
 
   _worker = async (message: I): Promise<SR> => {

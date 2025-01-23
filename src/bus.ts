@@ -44,6 +44,10 @@ export abstract class Bus<I, SR, BR> {
     }
   }
 
+  lag(): number {
+    return this._queue.length();
+  }
+
   destroy() {
     this._queue.killAndDrain();
     this._subscribers.forEach((subscriber) => {

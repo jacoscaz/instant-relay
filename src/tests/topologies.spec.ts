@@ -1,96 +1,111 @@
 
 import assert, { strictEqual } from 'assert';
-import { Subscriber, Bus } from '../index.js';
+import { Subscriber, BusToOne, BusToMany } from '../index.js';
 import { describe, it } from 'mocha';
 
 describe('topologies', () => {
 
-  it('circular topology, one bus, two subscribers, blocking chain', function (testDone) {
+  it('A -> BusToOne -> B', function (testDone) {
 
-    this.timeout(0);
+    const bus = new BusToOne<number>();
 
-    const single_bus = new Bus<'a'|'b'>();
-
-    Subscriber.create([single_bus], async (message) => {
-      switch (message) {
-        case 'b':
-          await single_bus.publish('a');
-      }
-    });
-    
     let recvd = 0;
-    Subscriber.create([single_bus], async (message) => {
-      if (message === 'a') {
-        recvd += 1;
-        if (recvd === 1_000_000) {
-          testDone();
-          return;
-        }
-        await single_bus.publish('b');
-      }
-    });
 
-    setImmediate(() => {
-      single_bus.publish('b');
-    });
-
-  });
-
-  it('circular topology, two buses, two subscribers, blocking chain', function (testDone) {
-
-    this.timeout(0);
-
-    const a_to_b = new Bus<'atob'>();
-    const b_to_a = new Bus<'btoa'>();
-
-    Subscriber.create([a_to_b], async (message) => {
-      await b_to_a.publish('btoa');
-    });
-    
-    let recvd = 0;
-    Subscriber.create([b_to_a], async (message) => {
+    Subscriber.create([bus], async (message) => {
       recvd += 1;
       if (recvd === 1_000_000) {
+        process.stdout.write('\n\nhere\n\n');
+        bus.destroy();
         testDone();
-        return;
       }
-      await a_to_b.publish('atob');
-    });
-
-    setImmediate(() => {
-      b_to_a.publish('btoa');
-    });
-
-  });
-
-  it('circular topology, three buses, three subscribers, blocking chain', function (testDone) {
-
-    this.timeout(0);
-
-    const a_to_b = new Bus<'atob'>();
-    const b_to_c = new Bus<'btoc'>();
-    const c_to_a = new Bus<'ctoa'>();
-
-    Subscriber.create([a_to_b], async (message) => {
-      await b_to_c.publish('btoc');
-    });
-
-    Subscriber.create([b_to_c], async (message) => {
-      await c_to_a.publish('ctoa');
-    });
-
-    let recvd = 0;
-    Subscriber.create([c_to_a], async (message) => {
-      recvd += 1;
-      if (recvd === 1_000_000) {
-        testDone();
-        return;
-      }
-      await a_to_b.publish('atob');
     });
     
-    setImmediate(() => { a_to_b.publish('atob'); });
+    let sent = 0;
 
+    const loop = () => {
+      if (sent < 1_000_000) {
+        bus.publish(sent++)
+          .then(loop)
+          .catch(testDone);
+      }
+    };
+
+    loop();
   });
 
+  it('A -> BusToMany -> B', function (testDone) {
+
+    const bus = new BusToMany<number>();
+
+    let recvd = 0;
+
+    Subscriber.create([bus], async (message) => {
+      recvd += 1;
+      if (recvd === 1_000_000) {
+        process.stdout.write('\n\nhere\n\n');
+        bus.destroy();
+        testDone();
+      }
+    });
+    
+    let sent = 0;
+
+    const loop = () => {
+      if (sent < 1_000_000) {
+        bus.publish(sent++)
+          .then(loop)
+          .catch(testDone);
+      }
+    };
+
+    loop();
+  });
+
+  it('A -> BusToOne -> B with return values', function (testDone) {
+
+    const bus = new BusToOne<number, string>();
+
+    Subscriber.create([bus], async (message) => {
+      return `${message}`;
+    });
+    
+    let sent = 0;
+
+    const loop = (str: string) => {
+      if (str === '1000000') {
+        testDone();
+      } else {
+        bus.publish(sent++)
+          .then(loop)
+          .catch(testDone);
+      }
+    };
+
+    loop('');
+  });
+
+  it('A -> BusToMany -> B with return values', function (testDone) {
+
+    const bus = new BusToMany<number, string>();
+
+    Subscriber.create([bus], async (message) => {
+      return `${message}`;
+    });
+    
+    let sent = 0;
+
+    const loop = (str: string[]) => {
+      if (str[0] === '1000000') {
+        testDone();
+      } else {
+        bus.publish(sent++)
+          .then(loop)
+          .catch(testDone);
+      }
+    };
+
+    loop(['']);
+  });
+
+  
 });

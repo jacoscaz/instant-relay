@@ -1,3 +1,3 @@
 
 export { Subscriber } from './subscriber.js';
-export { Bus } from './bus.js';
+export { BusToMany, BusToOne } from './bus.js';

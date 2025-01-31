@@ -1,5 +1,4 @@
 
-import assert, { strictEqual } from 'assert';
 import { Subscriber, BusToOne, BusToMany } from '../index.js';
 import { describe, it } from 'mocha';
 

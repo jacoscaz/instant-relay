@@ -41,23 +41,25 @@ const number_bus = new BusToOne<number, string>();
 const as_string: string = await number_bus.publish(Math.random());
 ```
 
-Selector functions can be passed to the `BusToOne` constructor via the 
-`selector` option:
+Subscriber selector functions can be passed to the `BusToOne` constructor via
+the `selector` option:
 
 ```typescript
-new BusToOne<number, string>({ selector: (subs) => subs[0] });
+const selector: BusToOne.Selector = { pick: subs => subs[0] };
+new BusToOne<number, string>({ selector });
 ```
 
-Strategies to select subscribers upon delivery of a published message can
-be passed to classes `BusToOne` as implementations of the `BusToOne.Selector`
-interface. Available implementations are:
+Available strategies:
 
-| class | description |
-| --- | --- |
-| `BusToOne.FirstSelector` | returns the first subscriber in the array |
-| `BusToOne.RoundRobinSelector` | cycles through subscriber |
-| `BusToOne.RandomSelector` | returns a randomly-selected subscriber |
-| `BusToOne.LowestLagSelector` | returns the subscriber with the lowest lag |
+| default | class | description |
+| --- | --- | --- |
+|| `BusToOne.FirstSelector` | returns the first subscriber in the array |
+| X | `BusToOne.RoundRobinSelector` | cycles through subscriber |
+|| `BusToOne.RandomSelector` | returns a randomly-selected subscriber |
+|| `BusToOne.LowestLagSelector` | returns the subscriber with the lowest lag |
+
+The `concurrency` constructor option can be used to set the max. amount of
+concurrent dispatches to subscribers.
 
 
 ### The `BusToMany` class
@@ -74,13 +76,22 @@ const number_bus = new BusToOne<number, string>();
 const as_string: string[] = await number_bus.publish(Math.random());
 ```
 
-Strategies to select subscribers upon delivery of a published message can
-be passed to classes `BusToMany` as implementations of the `BusToMany.Selector`
-interface. Available implementations are:
+Subscriber selector functions can be passed to the `BusToMany` constructor via
+the `selector` option:
 
-| class | description |
-| --- | --- |
-| `BusToMany.AllSelector` | returns all subscribers in the array |
+```typescript
+const selector: BusToMany.Selector = { pick: subs => subs.slice(1) };
+new BusToMany<number, string>({ selector });
+```
+
+Available strategies:
+
+| default | class | description |
+| --- | --- | --- |
+| X | `BusToMany.AllSelector` | returns all subscribers in the array |
+
+The `concurrency` constructor option can be used to set the max. amount of
+concurrent dispatches to subscribers.
 
 #### The `Subscriber` class
 
@@ -103,6 +114,9 @@ const subscriber = Subscriber.create([number_bus, boolean_bus], async (message) 
 ```
 
 Subscribers may be terminated via the `Subscriber.prototype.destroy()` method.
+
+The `concurrency` constructor option can be used to set the max. amount of
+messages being processed at any one time.
 
 ## License
 

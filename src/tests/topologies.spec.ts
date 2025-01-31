@@ -14,7 +14,6 @@ describe('topologies', () => {
     Subscriber.create([bus], async (message) => {
       recvd += 1;
       if (recvd === 1_000_000) {
-        process.stdout.write('\n\nhere\n\n');
         bus.destroy();
         testDone();
       }
@@ -42,7 +41,6 @@ describe('topologies', () => {
     Subscriber.create([bus], async (message) => {
       recvd += 1;
       if (recvd === 1_000_000) {
-        process.stdout.write('\n\nhere\n\n');
         bus.destroy();
         testDone();
       }

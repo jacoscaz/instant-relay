@@ -1,68 +1,88 @@
 
 # instant-relay
 
-`instant-relay` is an opinionated library of primitives for intra-process
-asynchronous communication. It provides foundational building blocks that
-may combined to form any desired topology.
-
-## Features
-
-1. **Backpressure management and prevention of accidental blocking 
-   behavior**, addressed by decoupling message delivery from message
-   handling and managing backpressure upon delivery.
-2. **Simplicity and ease of debugging**, addressed by a small codebase (~ 300
-   LoCs in total) and few dependencies (1 direct, 2 in total).
-3. **Performance**, addressed by selecting fast data structure implementations
-   and reducing the overall number of allocations per handled message.
-
-`instant-relay` was born out of the convergence of previous projects in the
-space of multi-protocol gateways for the IoT sector.
+`instant-relay` is a library of primitives for backpressure-aware,
+intra-process asynchronous communication. It provides foundational
+building blocks that may be combined to form any desired topology.
 
 ## How to use
 
-`instant-relay` exports two primitive classes: `Bus` and `Subscriber`.
+`instant-relay` exports three primitive classes: `BusToOne`, `BusToMany` and 
+`Subscriber`.
 
 ```ts
-import { Bus, Subscriber } from 'instant-relay';
+import { BusToOne, ButToMany, Subscriber } from 'instant-relay';
 ```
 
-### The `Bus` class
+### The `Bus` abstract class
 
-A `Bus` is a strongly-typed communication channel which multiple consumers
+A bus is a strongly-typed communication channel which multiple consumers
 may subscribe to and which multiple producers may publish to. Each bus is
-typed according to the message that may be published to it.
+typed according to the kinds of messages that may be published to it and
+to the kind of values that may be returned by subscribers as a result of
+processing each message. 
+
+All bus classes extends the abstract `Bus` class. `Bus` instances are
+backpressure-aware; the `Bus.prototype.publish()` method returns a promise
+that resolves when it is safe to publish additional messages.
+
+Buses may be terminated via the `Bus.prototype.destroy()` method.
+
+### The `BusToOne` class
+
+The `BusToOne` class implements a bus that dispatches published messages to
+only one of its subscribers, selected according to the specified strategy.
+
+The promise returned by the `BusToOne.prototype.publish()` method resolves
+to the value returned by the (one) subscriber that processed the message.
 
 ```ts
-const number_bus = new Bus<number>();
-number_bus.publish(Math.random());
+const number_bus = new BusToOne<number, string>();
+const as_string: string = await number_bus.publish(Math.random());
 ```
 
-`Bus` instances are backpressure-aware; the `Bus.prototype.publish()` method 
-returns a promise that resolves when it is safe to publish additional messages.
+Selector functions can be passed to the `BusToOne` constructor via the 
+`selector` option:
+
+```typescript
+new BusToOne<number, string>({ selector: (subs) => subs[0] });
+```
+
+Strategies to select subscribers upon delivery of a published message can
+be passed to classes `BusToOne` as implementations of the `BusToOne.Selector`
+interface. Available implementations are:
+
+| class | description |
+| --- | --- |
+| `BusToOne.FirstSelector` | returns the first subscriber in the array |
+| `BusToOne.RoundRobinSelector` | cycles through subscriber |
+| `BusToOne.RandomSelector` | returns a randomly-selected subscriber |
+| `BusToOne.LowestLagSelector` | returns the subscriber with the lowest lag |
+
+
+### The `BusToMany` class
+
+The `BusToMany` class implements a bus that dispatches published messages to
+some or all of its subscribers, selected according to the specified strategy.
+
+The promised returned by the `BusToMany.prototype.publish()` method resolves
+to an array of all the values returned by the (multiple) subscribers that
+processed the message.
 
 ```ts
-const number_bus = new Bus<number>();
-const publish_loop = () => {
-  number_bus.publish(Math.random()).then(publish_loop);
-};
-publish_loop();
+const number_bus = new BusToOne<number, string>();
+const as_string: string[] = await number_bus.publish(Math.random());
 ```
 
-In the example above, the loop will match the consumption rate of subscribers
-to `number_bus`, dictated by the slowest subscriber.
+Strategies to select subscribers upon delivery of a published message can
+be passed to classes `BusToMany` as implementations of the `BusToMany.Selector`
+interface. Available implementations are:
 
-The `Bus` constructor accepts an optional `transform` function that, if 
-present, will be applied to every message passing through the instance.
+| class | description |
+| --- | --- |
+| `BusToMany.AllSelector` | returns all subscribers in the array |
 
-```ts
-const num_to_str_bus = new Bus({ transform: (n: number) => `${n}` });
-```
-
-The TS compiler will, in the presence of a `transform` function, automatically
-infer the type of messages that may be published to the bus and the type of
-subscribers that may subscribe to it.
-
-### The `Subscriber` class
+#### The `Subscriber` class
 
 The `Subscriber` class may be used to create subscribers to one or more `Bus`
 instances out of a single handler function. The TS compiler will automatically
@@ -70,8 +90,8 @@ infer the type of the message passed to the handler function based on the
 provided `Bus` instances.
 
 ```ts
-const number_bus = new Bus<number>();
-const boolean_bus = new Bus<boolean>();
+const number_bus = new BusToOne<number>();
+const boolean_bus = new BusToOne<boolean>();
 
 const subscriber = Subscriber.create([number_bus, boolean_bus], async (message) => {
   // This will make the TS compiler throw an error
@@ -81,6 +101,8 @@ const subscriber = Subscriber.create([number_bus, boolean_bus], async (message) 
   message + 2;
 });
 ```
+
+Subscribers may be terminated via the `Subscriber.prototype.destroy()` method.
 
 ## License
 

@@ -22,6 +22,7 @@ export abstract class Bus<I, SR, BR> {
   constructor(opts: Bus.Opts = EMPTY_OBJ) {
     this._queue = fastq.promise<any, I, BR>(this, (task) => this._worker(task), opts.concurrency ?? 1);
     this._queue.error(crashIfError);
+    this._queue.pause();
     this._subscribers = [];
   }
 
@@ -99,7 +100,16 @@ export class BusToOne<I = any, SR = any | undefined> extends Bus<I, SR, SR> {
   static RoundRobinSelector = class RoundRobinSelector<I, SR> implements BusToOne.Selector<I, SR> {
     #curr: number = 0;
     pick(subscribers: [Subscriber<I, SR>, ...rest: Subscriber<I, SR>[]]): Subscriber<I, SR> {
-      return subscribers[this.#curr = (this.#curr + 1) % subscribers.length];
+      if (this.#curr >= subscribers.length) {
+        this.#curr = 0;
+      }
+      return subscribers[this.#curr++];
+    }
+  }
+
+  static RandomSelector = class RandomSelector<I, SR> implements BusToOne.Selector<I, SR> {
+    pick(subscribers: [Subscriber<I, SR>, ...rest: Subscriber<I, SR>[]]): Subscriber<I, SR> {
+      return subscribers[Math.floor(Math.random() * subscribers.length)];
     }
   }
 

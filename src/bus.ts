@@ -14,7 +14,7 @@ export namespace Bus {
 }
 
 export abstract class Bus<I, SR, BR> {
-  
+
   protected _subscribers: Subscriber<I, SR>[];
   protected _queue: fastq.queueAsPromised<I, BR>;
   protected abstract _worker: fastq.asyncWorker<any, I, BR>
@@ -29,7 +29,7 @@ export abstract class Bus<I, SR, BR> {
   addSubscriber(subscriber: Subscriber<I, SR>) {
     if (!this._subscribers.includes(subscriber)) {
       this._subscribers.push(subscriber);
-      subscriber.on('destroy', this._onSubscriberDestroy);  
+      subscriber.on('destroy', this._onSubscriberDestroy);
     }
     this._queue.resume();
   }
@@ -98,12 +98,12 @@ export class BusToOne<I = any, SR = any | undefined> extends Bus<I, SR, SR> {
   }
 
   static RoundRobinSelector = class RoundRobinSelector<I, SR> implements BusToOne.Selector<I, SR> {
-    #curr: number = 0;
+    _curr: number = 0;
     pick(subscribers: [Subscriber<I, SR>, ...rest: Subscriber<I, SR>[]]): Subscriber<I, SR> {
-      if (this.#curr >= subscribers.length) {
-        this.#curr = 0;
+      if (this._curr >= subscribers.length) {
+        this._curr = 0;
       }
-      return subscribers[this.#curr++];
+      return subscribers[this._curr++];
     }
   }
 

@@ -2,7 +2,7 @@
 import type { Subscriber } from './subscriber.js';
 
 import fastq from 'fastq';
-import { crashIfError, EMPTY_OBJ, noopAsync } from './utils.js';
+import { EMPTY_OBJ } from './utils.js';
 
 
 export namespace Bus {
@@ -21,7 +21,6 @@ export abstract class Bus<I, SR, BR> {
 
   constructor(opts: Bus.Opts = EMPTY_OBJ) {
     this._queue = fastq.promise<any, I, BR>(this, (task) => this._worker(task), opts.concurrency ?? 1);
-    this._queue.error(crashIfError);
     this._queue.pause();
     this._subscribers = [];
   }
@@ -45,15 +44,25 @@ export abstract class Bus<I, SR, BR> {
     }
   }
 
+  removeAllSubscribers() {
+    this._subscribers.forEach((sub) => {
+      sub.removeListener('destroy', this._onSubscriberDestroy);
+    });
+    this._subscribers.splice(0, this._subscribers.length);
+    this._queue.pause();
+  }
+
   lag(): number {
     return this._queue.length();
   }
 
+  abort() {
+    this._queue.abort();
+  }
+
   destroy() {
-    this._queue.killAndDrain();
-    this._subscribers.forEach((subscriber) => {
-      this.removeSubscriber(subscriber);
-    });
+    this.abort();
+    this.removeAllSubscribers();
     this.publish = this._destroyedPublish;
   }
 

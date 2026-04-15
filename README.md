@@ -26,7 +26,17 @@ All bus classes extends the abstract `Bus` class. `Bus` instances are
 backpressure-aware; the `Bus.prototype.publish()` method returns a promise
 that resolves when it is safe to publish additional messages.
 
-Buses may be terminated via the `Bus.prototype.destroy()` method.
+The `Bus` class exposes the following methods:
+
+| method | description |
+| --- | --- |
+| `publish(message)` | Publishes a message to the bus. Returns a promise that resolves when it is safe to publish additional messages. |
+| `addSubscriber(subscriber)` | Adds a subscriber to the bus and resumes the internal queue. |
+| `removeSubscriber(subscriber)` | Removes a specific subscriber from the bus. Pauses the queue if no subscribers remain. |
+| `removeAllSubscribers()` | Removes all subscribers from the bus without triggering their `destroy` event listeners, and pauses the internal queue. New subscribers may be added afterwards. |
+| `lag()` | Returns the number of messages currently queued for processing. |
+| `abort()` | Aborts all pending queued tasks, rejecting their corresponding `publish()` promises with an `Error('abort')`. |
+| `destroy()` | Terminates the bus by calling `abort()`, removing all subscribers, and replacing `publish()` with a method that throws. |
 
 ### The `BusToOne` class
 
@@ -93,7 +103,7 @@ Available strategies:
 The `concurrency` constructor option can be used to set the max. amount of
 concurrent dispatches to subscribers.
 
-#### The `Subscriber` class
+### The `Subscriber` class
 
 The `Subscriber` class may be used to create subscribers to one or more `Bus`
 instances out of a single handler function. The TS compiler will automatically
